@@ -1,0 +1,7 @@
+hamana.code-workspace
+.coverage
+/gitignore
+/**/__pycache__
+/**/.DS_Store
+/tests/test.ini
+/.vscode
