@@ -1,12 +1,11 @@
 from __future__ import annotations
 import logging
-from typing import Any, Generator, overload
+from typing import Any, Generator
 
-from pydantic import computed_field
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
 
-from .query import Query
+from ...query import Query
 
 from .config import DatabaseConnectorConfig
 from .interface import DatabaseConnectorABC
@@ -19,21 +18,20 @@ class OracleConnectorConfig(DatabaseConnectorConfig):
     """
         Class to represent the configuration of an Oracle database.
     """
-    
+
     port: int = 1521
     """Port of the Oracle database. Default is 1521."""
 
     data_source_name: str | None = None
     """DSN connection string to connect on the database."""
 
-    @computed_field
     @property
     def connect_params(self) -> ConnectParams:
         return ConnectParams(host = self.host, port = self.port, service_name = self.service, user = self.user, password = self.password) # type: ignore
-    
+
     def get_data_source_name(self) -> str:
         return self.data_source_name if self.data_source_name else self.connect_params.get_connect_string()
-    
+
 
 class OracleConnector(DatabaseConnectorABC):
     """
@@ -86,15 +84,31 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    @overload
-    def execute(self, query: Query, batch_size: None) -> list[tuple]:
-        ...
+    def execute(self, query: Query, batch_size: int | None = None) -> list[tuple]:
+        logger.debug("start")
 
-    @overload
-    def execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
-        ...
+        # execute query
+        try:
+            with self as conn:
+                logger.info(f"extracting data (using: {self.config.user}) ...")
+                with conn.connector.cursor() as cursor:
+                    logger.info(query.query)
 
-    def execute(self, query: Query, batch_size: int | None = None) -> list[tuple] | Generator[list[tuple], None, None]:
+                    # execute query
+                    cursor.execute(query.query, parameters = query.get_params()) # type: ignore
+                    results = cursor.fetchall()
+                    logger.info(f"data extracted ({cursor.rowcount} rows)")
+        except OperationalError as e:
+            logger.exception(e)
+            raise DatabaseConnetionError(f"unable to establish connection with database")
+        except Exception as e:
+            logger.exception(e)
+            raise e
+
+        logger.debug("end")
+        return results
+
+    def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
         logger.debug("start")
 
         # execute query
@@ -107,13 +121,12 @@ class OracleConnector(DatabaseConnectorABC):
                     # execute query
                     cursor.execute(query.query, parameters = query.get_params()) # type: ignore
 
-                    if batch_size is None:
-                        # fetch all
-                        results = cursor.fetchall()
-                        logger.info(f"data extracted ({cursor.rowcount} rows)")
-                    else:
-                        # fetch in batches
+                    # fetch in batches
+                    while True:
                         results = cursor.fetchmany(batch_size)
+                        if not results:
+                            break
+                        yield results
         except OperationalError as e:
             logger.exception(e)
             raise DatabaseConnetionError(f"unable to establish connection with database")
@@ -122,4 +135,4 @@ class OracleConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("end")
-        yield results
+        return
