@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hamana"
+version = "0.0.1-dev"
+requires-python = ">=3.12"
+authors = [
+    { name = "Andrea Zanini", email= "" },
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Web Environment",
+    "Framework :: Pydantic",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology"
+]
+dependencies = [
+    "pandas>=2.2.3",
+    "pydantic>=2.9.2",
+    "oracledb>=2.4.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/zazza123/hamana"
+Repository = "https://github.com/zazza123/hamana"
