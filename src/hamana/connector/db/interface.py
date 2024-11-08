@@ -1,7 +1,7 @@
 from typing import Any
 from abc import ABCMeta, abstractmethod
 
-from ..query import Query
+from .query import Query
 
 class DatabaseConnectorABC(metaclass = ABCMeta):
     """

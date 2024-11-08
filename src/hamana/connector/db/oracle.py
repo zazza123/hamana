@@ -6,11 +6,11 @@ from pydantic import computed_field
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
 
-from hamana.db.query import Query
+from .query import Query
 
-from ..connector.config import DatabaseConnectorConfig
-from ..connector.interface import DatabaseConnectorABC
-from ..connector.exceptions import DatabaseConnetionError
+from .config import DatabaseConnectorConfig
+from .interface import DatabaseConnectorABC
+from .exceptions import DatabaseConnetionError
 
 # set logger
 logger = logging.getLogger(__name__)
