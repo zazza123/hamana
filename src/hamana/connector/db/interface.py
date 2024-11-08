@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, Generator
 from abc import ABCMeta, abstractmethod
 
-from .query import Query
+from ...query import Query
 
 class DatabaseConnectorABC(metaclass = ABCMeta):
     """
@@ -20,10 +20,22 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             Function used to execute data from the database.
 
             Parameters:
-                - query: query to execute on database.
+                query: query to execute on database.
 
             Return:
                 dataframe with the resulting rows.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def batch_execute(self, query: Query, batch_size: int) -> Generator[Any, None, None]:
+        """
+            Function used to execute a query on the database and return the results in batches. 
+            This approach is used to avoid memory issues when dealing with large datasets.
+
+            Parameters:
+                query: query to execute on database.
+                batch_size: size of the batch to return.
         """
         raise NotImplementedError
 
@@ -32,5 +44,6 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
         return (
                 hasattr(subclass, 'ping') and callable(subclass.ping)
             and hasattr(subclass, 'execute') and callable(subclass.execute)
+            and hasattr(subclass, 'batch_execute') and callable(subclass.batch_execute)
             or NotImplemented
         )
