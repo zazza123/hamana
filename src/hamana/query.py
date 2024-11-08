@@ -43,8 +43,9 @@ class Query:
 
     def __init__(
         self,
-        query: str, columns: list[QueryColumn] | None = None,
-        params: list[QueryParam] | None = None
+        query: str,
+        columns: list[QueryColumn] | None = None,
+        params: list[QueryParam] | dict[str, ParamValue] | None = None
     ) -> None:
         self.query = query
         self.columns = columns
@@ -53,7 +54,7 @@ class Query:
     query: str
     """Query to be executed in the database."""
 
-    params: list[QueryParam] | None
+    params: list[QueryParam] | dict[str, ParamValue] | None
     """
         List of parameters used in the query.  
         The parameters are replaced by their values when the query is executed.
@@ -71,4 +72,11 @@ class Query:
             Returns the query parameters as a dictionary.
             Returns None if there are no parameters.
         """
-        return {param.name : param.value for param in self.params} if self.params else None
+        if isinstance(self.params, list):
+            _params = {param.name : param.value for param in self.params}
+        else:
+            _params = self.params
+        return _params
+
+    def __str__(self) -> str:
+        return self.query
