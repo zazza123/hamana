@@ -1,3 +1,4 @@
+from pandas import DataFrame
 from pydantic import BaseModel
 
 # param value custom type
@@ -54,17 +55,23 @@ class Query:
     query: str
     """Query to be executed in the database."""
 
-    params: list[QueryParam] | dict[str, ParamValue] | None
+    params: list[QueryParam] | dict[str, ParamValue] | None = None
     """
         List of parameters used in the query.  
         The parameters are replaced by their values when the query is executed.
     """
 
-    columns: list[QueryColumn] | None
+    columns: list[QueryColumn] | None = None
     """
         Definition of the columns returned by the query. 
         The columns are used to map the query result to the application data.
         If not provided, the query result columns matches the database output.
+    """
+
+    result: DataFrame | None = None
+    """
+        Result of the query execution. 
+        The result is a DataFrame with the columns defined in the query.
     """
 
     def get_params(self) -> dict[str, ParamValue] | None:
