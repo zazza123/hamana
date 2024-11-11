@@ -52,7 +52,7 @@ class OracleConnector(DatabaseConnectorABC):
         logger.info("connection opened")
         logger.debug("end")
         return self
-    
+
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         """
             Close a connection.
@@ -60,7 +60,9 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("start")
 
         if exc_type is not None:
-            logger.warning(exc_type)
+            logger.error(f"exception occurred: {exc_type}")
+            logger.error(f"exception value: {exc_value}")
+            logger.error(f"exception traceback: {exc_traceback}")
 
         self.connector.close()
 
@@ -84,7 +86,7 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    def execute(self, query: Query, batch_size: int | None = None) -> list[tuple]:
+    def execute(self, query: Query) -> list[tuple]:
         logger.debug("start")
 
         # execute query
@@ -92,10 +94,13 @@ class OracleConnector(DatabaseConnectorABC):
             with self as conn:
                 logger.info(f"extracting data (using: {self.config.user}) ...")
                 with conn.connector.cursor() as cursor:
-                    logger.info(query.query)
 
                     # execute query
                     cursor.execute(query.query, parameters = query.get_params()) # type: ignore
+                    logger.info(f"query: {query.query}")
+                    logger.info(f"parameters: {query.get_params()}")
+
+                    # fetch results
                     results = cursor.fetchall()
                     logger.info(f"data extracted ({cursor.rowcount} rows)")
         except OperationalError as e:
@@ -116,10 +121,11 @@ class OracleConnector(DatabaseConnectorABC):
             with self as conn:
                 logger.info(f"extracting data (using: {self.config.user}) ...")
                 with conn.connector.cursor() as cursor:
-                    logger.info(query.query)
 
                     # execute query
                     cursor.execute(query.query, parameters = query.get_params()) # type: ignore
+                    logger.info(f"query: {query.query}")
+                    logger.info(f"parameters: {query.get_params()}")
 
                     # fetch in batches
                     while True:
