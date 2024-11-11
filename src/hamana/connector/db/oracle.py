@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
-from typing import Any, Generator
+from types import TracebackType
+from typing import Any, Generator, Type
 
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
@@ -53,12 +54,13 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+    def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
         """
             Close a connection.
         """
         logger.debug("start")
 
+        # log exception
         if exc_type is not None:
             logger.error(f"exception occurred: {exc_type}")
             logger.error(f"exception value: {exc_value}")
