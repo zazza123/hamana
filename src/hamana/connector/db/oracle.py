@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 from types import TracebackType
-from typing import Any, Generator, Type
+from typing import Any, Generator, Type, overload
 
 from pandas import DataFrame
 from oracledb import Connection, ConnectParams
@@ -157,8 +157,19 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    def execute(self, query: Query) -> DataFrame:
+    @overload
+    def execute(self, query: str) -> Query: ...
+
+    @overload
+    def execute(self, query: Query) -> None: ...
+
+    def execute(self, query: Query | str) -> None | Query:
         logger.debug("start")
+
+        flag_query_str = isinstance(query, str)
+        if flag_query_str:
+            logger.info("query string provided")
+            query = Query(query)
 
         # execute query
         try:
@@ -205,8 +216,11 @@ class OracleConnector(DatabaseConnectorABC):
             logger.info("query column updated")
             query.columns = columns
 
+        # set query result
+        query.result = df_result
+
         logger.debug("end")
-        return df_result
+        return query if flag_query_str else None
 
     def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
         logger.debug("start")
