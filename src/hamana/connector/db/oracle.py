@@ -182,6 +182,9 @@ class OracleConnector(DatabaseConnectorABC):
                     logger.info(f"query: {query.query}")
                     logger.info(f"parameters: {query.get_params()}")
 
+                    # set columns
+                    columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+
                     # fetch results
                     result = cursor.fetchall()
                     logger.info(f"data extracted ({cursor.rowcount} rows)")
@@ -193,7 +196,6 @@ class OracleConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("convert to Dataframe")
-        columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
         df_result = DataFrame(result, columns = [column.source for column in columns])
 
         # adjust columns
