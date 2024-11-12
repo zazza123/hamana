@@ -55,6 +55,74 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return self
 
+    @classmethod
+    def create_config(
+        cls,
+        user: str,
+        password: str,
+        host: str | None = None,
+        service: str | None = None,
+        port: int = 1521,
+        data_source_name: str | None = None
+    ) -> OracleConnectorConfig:
+        """
+            Use this function to create a new Oracle connector configuration.
+
+            Parameters:
+                user: User to connect to the database.
+                password: Password to uso to connect to the database.
+                host: Host of the database.
+                service: Service name of the database.
+                port: Port of the database.
+                data_source_name: DSN connection string to connect on the database. 
+                    Observe that if DSN is provided, then host, service and port are ignored.
+        """
+        logger.debug("start")
+
+        if data_source_name:
+            logger.debug("data source name provided")
+            config = OracleConnectorConfig(user = user, password = password, data_source_name = data_source_name)
+        else:
+            logger.debug(f"host: {host}, service: {service}, port: {port}")
+            config = OracleConnectorConfig(user = user, password = password, host = host, service = service, port = port)
+
+        logger.debug("end")
+        return config
+
+    @classmethod
+    def new(
+        cls,
+        user: str,
+        password: str,
+        host: str | None = None,
+        service: str | None = None,
+        port: int = 1521,
+        data_source_name: str | None = None
+    ) -> "OracleConnector":
+        """
+            Use this function to create a new Oracle connector.
+
+            Parameters:
+                user: User to connect to the database.
+                password: Password to uso to connect to the database.
+                host: Host of the database.
+                service: Service name of the database.
+                port: Port of the database.
+                data_source_name: DSN connection string to connect on the database. 
+                    Observe that if DSN is provided, then host, service and port are ignored.
+        """
+        logger.debug("start")
+        config = cls.create_config(
+            user = user,
+            password = password,
+            host = host,
+            service = service,
+            port = port,
+            data_source_name = data_source_name
+        )
+        logger.debug("end")
+        return cls(config)
+
     def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
         """
             Close a connection.
