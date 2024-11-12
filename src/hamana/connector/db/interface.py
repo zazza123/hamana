@@ -17,7 +17,7 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
     @abstractmethod
     def execute(self, query: Query) -> Any:
         """
-            Function used to execute data from the database.
+            Function used to extract data from the database.
 
             Parameters:
                 query: query to execute on database.
