@@ -1,17 +1,15 @@
 from __future__ import annotations
 import logging
-from types import TracebackType
-from typing import Any, Generator, Type, overload
+from typing import Any, Generator, overload
 
 from pandas import DataFrame
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
 
-from ...query import Query, QueryColumn
-
+from .base import BaseConnector
 from .config import DatabaseConnectorConfig
-from .interface import DatabaseConnectorABC
 from .exceptions import DatabaseConnetionError
+from ...query import Query, QueryColumn
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -35,7 +33,7 @@ class OracleConnectorConfig(DatabaseConnectorConfig):
         return self.data_source_name if self.data_source_name else self.connect_params.get_connect_string()
 
 
-class OracleConnector(DatabaseConnectorABC):
+class OracleConnector(BaseConnector):
     """
         Class to represent a connector to an Oracle database.
     """
@@ -43,7 +41,7 @@ class OracleConnector(DatabaseConnectorABC):
     def __init__(self, config: OracleConnectorConfig, **kwargs: dict[str, Any]) -> None:
         self.config = config
         self.kwargs = kwargs
-        self.connector: Connection
+        self.connection: Connection
 
     @classmethod
     def create_config(
@@ -113,40 +111,14 @@ class OracleConnector(DatabaseConnectorABC):
         logger.debug("end")
         return cls(config)
 
-    def __enter__(self) -> "OracleConnector":
-        """
-            Open a connection.
-        """
-        logger.debug("start")
-        self.connector = Connection(dsn= self.config.get_data_source_name(), params = self.config.connect_params)
-        logger.info("connection opened")
-        logger.debug("end")
-        return self
-
-    def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
-        """
-            Close a connection.
-        """
-        logger.debug("start")
-
-        # log exception
-        if exc_type is not None:
-            logger.error(f"exception occurred: {exc_type}")
-            logger.error(f"exception value: {exc_value}")
-            logger.error(f"exception traceback: {exc_traceback}")
-
-        self.connector.close()
-
-        logger.info("connection closed")
-        logger.debug("end")
-        return
+    def _connect(self) -> Connection:
+        return Connection(dsn= self.config.get_data_source_name(), params = self.config.connect_params)
 
     def ping(self) -> None:
         logger.debug("start")
 
         try:
-            with self as db:
-                db.connector.ping()
+            super().ping()
         except OperationalError as e:
             logger.exception(e)
             raise DatabaseConnetionError("unable to establish connection with database.")
@@ -175,7 +147,7 @@ class OracleConnector(DatabaseConnectorABC):
         try:
             with self as conn:
                 logger.info(f"extracting data (using: {self.config.user}) ...")
-                with conn.connector.cursor() as cursor:
+                with conn.connection.cursor() as cursor:
 
                     # execute query
                     cursor.execute(query.query, parameters = query.get_params()) # type: ignore
@@ -231,7 +203,7 @@ class OracleConnector(DatabaseConnectorABC):
         try:
             with self as conn:
                 logger.info(f"extracting data (using: {self.config.user}) ...")
-                with conn.connector.cursor() as cursor:
+                with conn.connection.cursor() as cursor:
 
                     # execute query
                     cursor.execute(query.query, parameters = query.get_params()) # type: ignore
