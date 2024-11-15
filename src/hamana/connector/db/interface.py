@@ -1,44 +1,30 @@
-from typing import Any, Generator
+from typing import Any, Generator, Protocol
 from abc import ABCMeta, abstractmethod
 
 from ...query import Query
 
 """PEP 249 Standard Database API Specification v2.0"""
-class ConnectionABC(metaclass = ABCMeta):
+class ConnectionProtocol(Protocol):
     """
         The following abtract class defines a general database connection.  
         A connection is used in order to connect to a database and perform operations on it.
     """
 
-    @abstractmethod
     def close(self) -> None:
         """Function used to close the database connection."""
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def commit(self) -> None:
         """Function used to commit the transaction."""
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def rollback(self) -> None:
         """Function used to rollback the transaction."""
-        raise NotImplementedError
+        ...
 
-    @abstractmethod
     def cursor(self) -> Any:
         """Function used to create a cursor."""
-        raise NotImplementedError
-
-    @classmethod
-    def __subclasshook__(cls, subclass):
-        return (
-                hasattr(subclass, 'close') and callable(subclass.close)
-            and hasattr(subclass, 'commit') and callable(subclass.commit)
-            and hasattr(subclass, 'rollback') and callable(subclass.rollback)
-            and hasattr(subclass, 'cursor') and callable(subclass.cursor)
-            or NotImplemented
-        )
+        ...
 
 class DatabaseConnectorABC(metaclass = ABCMeta):
     """
@@ -46,11 +32,11 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
         A connector is used in order to connect to a database and perform operations on it.
     """
 
-    connection: ConnectionABC
+    connection: ConnectionProtocol
     """Database connection."""
 
     @abstractmethod
-    def _connect(self) -> ConnectionABC:
+    def _connect(self) -> ConnectionProtocol:
         """
             Function used to connect to the database.
 

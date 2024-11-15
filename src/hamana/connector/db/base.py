@@ -2,7 +2,7 @@ import logging
 from types import TracebackType
 from typing import Type
 
-from .interface import DatabaseConnectorABC, ConnectionABC
+from .interface import DatabaseConnectorABC, ConnectionProtocol
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ class BaseConnector(DatabaseConnectorABC):
     """
 
     def __init__(self) -> None:
-        self.connection: ConnectionABC
+        self.connection: ConnectionProtocol
 
     def __enter__(self) -> "BaseConnector":
         logger.debug("start")

@@ -44,7 +44,6 @@ class OracleConnector(BaseConnector):
     def __init__(self, config: OracleConnectorConfig, **kwargs: dict[str, Any]) -> None:
         self.config = config
         self.kwargs = kwargs
-        self.connection: Connection
 
     @classmethod
     def create_config(
