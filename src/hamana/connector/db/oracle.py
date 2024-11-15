@@ -22,6 +22,9 @@ class OracleConnectorConfig(DatabaseConnectorConfig):
     port: int = 1521
     """Port of the Oracle database. Default is 1521."""
 
+    service: str | None = None
+    """Service name of the database."""
+
     data_source_name: str | None = None
     """DSN connection string to connect on the database."""
 

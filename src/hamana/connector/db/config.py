@@ -7,15 +7,12 @@ class DatabaseConnectorConfig(BaseModel):
 
     host: str | None = None
     """Host of the database."""
-    
+
     port: int = 0
     """Port of the database."""
-    
-    service: str | None = None
-    """Service name of the database."""
-    
+
     user: str | None = None
     """User to connect to the database."""
-    
+
     password: str | None = None
     """Password of the user to connect to the database."""
