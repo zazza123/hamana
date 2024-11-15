@@ -15,7 +15,7 @@ class BaseConnector(DatabaseConnectorABC):
     def __init__(self) -> None:
         self.connection: ConnectionProtocol
 
-    def __enter__(self) -> "BaseConnector":
+    def __enter__(self):
         logger.debug("start")
         self.connection = self._connect()
         logger.info("connection opened")
