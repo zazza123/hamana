@@ -45,16 +45,6 @@ class OracleConnector(DatabaseConnectorABC):
         self.kwargs = kwargs
         self.connector: Connection
 
-    def __enter__(self) -> "OracleConnector":
-        """
-            Open a connection.
-        """
-        logger.debug("start")
-        self.connector = Connection(dsn= self.config.get_data_source_name(), params = self.config.connect_params)
-        logger.info("connection opened")
-        logger.debug("end")
-        return self
-
     @classmethod
     def create_config(
         cls,
@@ -122,6 +112,16 @@ class OracleConnector(DatabaseConnectorABC):
         )
         logger.debug("end")
         return cls(config)
+
+    def __enter__(self) -> "OracleConnector":
+        """
+            Open a connection.
+        """
+        logger.debug("start")
+        self.connector = Connection(dsn= self.config.get_data_source_name(), params = self.config.connect_params)
+        logger.info("connection opened")
+        logger.debug("end")
+        return self
 
     def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
         """
