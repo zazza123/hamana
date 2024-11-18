@@ -1,2 +1,4 @@
-class DatabaseConnetionError(Exception):
+from ...core.exceptions import HamanaException
+
+class DatabaseConnetionError(HamanaException):
     pass
