@@ -44,6 +44,7 @@ class OracleConnector(BaseConnector):
     def __init__(self, config: OracleConnectorConfig, **kwargs: dict[str, Any]) -> None:
         self.config = config
         self.kwargs = kwargs
+        self.connection: Connection
 
     @classmethod
     def create_config(
@@ -114,7 +115,7 @@ class OracleConnector(BaseConnector):
         return cls(config)
 
     def _connect(self) -> Connection:
-        return Connection(dsn= self.config.get_data_source_name(), params = self.config.connect_params)
+        return Connection(dsn = self.config.get_data_source_name(), params = self.config.connect_params)
 
     def ping(self) -> None:
         logger.debug("start")

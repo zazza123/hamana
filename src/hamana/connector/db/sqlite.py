@@ -18,7 +18,7 @@ class SQLiteConnector(BaseConnector):
     def __init__(self, path: str, **kwargs: dict[str, Any]) -> None:
         self.path = path
         self.kwargs = kwargs
-        self.connection: Connection # type: ignore
+        self.connection: Connection
 
     def _connect(self) -> Connection:
         return Connection(self.path)

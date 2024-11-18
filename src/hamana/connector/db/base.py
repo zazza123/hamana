@@ -12,9 +12,6 @@ class BaseConnector(DatabaseConnectorABC):
         Class to represent a connector to a database.
     """
 
-    def __init__(self) -> None:
-        self.connection: ConnectionProtocol
-
     def __enter__(self):
         logger.debug("start")
         self.connection = self._connect()
