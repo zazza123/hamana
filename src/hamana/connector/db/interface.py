@@ -1,7 +1,9 @@
-from typing import Any, Generator, Protocol
+from __future__ import annotations
+from typing import Any, Generator, Protocol, TYPE_CHECKING
 from abc import ABCMeta, abstractmethod
 
-from .query import Query
+if TYPE_CHECKING:
+    from .query import Query
 
 """PEP 249 Standard Database API Specification v2.0"""
 class ConnectionProtocol(Protocol):

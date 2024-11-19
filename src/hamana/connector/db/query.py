@@ -1,5 +1,12 @@
+import logging
+
 from pandas import DataFrame
 from pydantic import BaseModel
+
+from .exceptions import QueryResultNotAvailable
+
+# set logging
+logger = logging.getLogger(__name__)
 
 # param value custom type
 ParamValue = int | float | str | bool
@@ -84,6 +91,42 @@ class Query:
         else:
             _params = self.params
         return _params
+
+    def to_sqlite(self, table_name: str) -> None:
+        """
+            This function is used to insert the query result into a 
+            table hosted on the hamana internal database (HamanaDatabase). 
+
+            Parameters:
+                table_name: name of the table to create into the database.
+
+            Raises:
+                QueryResultNotAvailable: if no result is available.
+        """
+        logger.debug("start")
+
+        # check result 
+        if self.result is None:
+            logger.error("no result to save")
+            raise QueryResultNotAvailable("no result to save")
+
+        # import internal database
+        from ...core.db import HamanaDatabase
+
+        # get instance
+        db = HamanaDatabase.get_instance()
+        with db as conn:
+            logger.debug(f"inserting data into table {table_name}")
+            self.result.to_sql(
+                name = table_name,
+                con = conn.connection,
+                if_exists = "replace",
+                index = False
+            )
+            logger.info(f"data inserted into table {table_name}")
+
+        logger.debug("end")
+        return
 
     def __str__(self) -> str:
         return self.query
