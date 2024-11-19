@@ -1,8 +1,10 @@
 import logging
-from pathlib import Path
 from typing import Any
+from abc import ABCMeta
+from pathlib import Path
 from sqlite3 import Connection, connect
 
+from ..connector.db.sqlite import SQLiteConnector
 from .exceptions import HamanaDatabaseAlreadyInitialised, HamanaDatabaseNotInitialised
 
 # set logger
@@ -26,7 +28,10 @@ class HamanaSingleton(type):
             raise HamanaDatabaseAlreadyInitialised()
         return cls._instances[cls]
 
-class HamanaDatabase(metaclass = HamanaSingleton):
+class HamanaDatabaseMeta(HamanaSingleton, ABCMeta):
+    pass
+
+class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
     """
         This class is responsible for handling the database connection of the library.  
         For each execution, only one instance of this class is allowed to manage a single 
@@ -37,7 +42,14 @@ class HamanaDatabase(metaclass = HamanaSingleton):
 
     def __init__(self, path: str | Path = ":memory:") -> None:
         path_str = str(path)
+        super().__init__(path_str)
         self._connection = connect(database = path_str)
+
+    def _connect(self) -> Connection:
+        if self._connection is None:
+            logger.error("Database connection is not initialized.")
+            raise HamanaDatabaseNotInitialised()
+        return self._connection
 
     @classmethod
     def get_instance(cls) -> "HamanaDatabase":
