@@ -5,7 +5,7 @@ from typing import Any, Generator, overload
 from pandas import DataFrame
 
 from .base import BaseConnector
-from ...query import Query, QueryColumn
+from .query import Query, QueryColumn
 
 # set logger
 logger = logging.getLogger(__name__)

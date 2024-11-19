@@ -1,7 +1,7 @@
 from typing import Any, Generator, Protocol
 from abc import ABCMeta, abstractmethod
 
-from ...query import Query
+from .query import Query
 
 """PEP 249 Standard Database API Specification v2.0"""
 class ConnectionProtocol(Protocol):

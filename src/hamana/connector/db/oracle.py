@@ -9,7 +9,7 @@ from oracledb.exceptions import OperationalError
 from .base import BaseConnector
 from .config import DatabaseConnectorConfig
 from .exceptions import DatabaseConnetionError
-from ...query import Query, QueryColumn
+from .query import Query, QueryColumn
 
 # set logger
 logger = logging.getLogger(__name__)
