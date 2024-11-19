@@ -18,9 +18,9 @@ class HamanaSingleton(type):
     """
     _instances = {}
 
-    def __call__(cls, *args: tuple, **kwargs: dict[str, Any]):
+    def __call__(cls, path: str | Path, *args: tuple, **kwargs: dict[str, Any]):
         if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
+            instance = super().__call__(path, *args, **kwargs)
             cls._instances[cls] = instance
             logger.info("HamanaDatabase is initialized.")
         else:
