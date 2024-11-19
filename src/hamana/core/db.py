@@ -18,7 +18,7 @@ class HamanaSingleton(type):
     """
     _instances = {}
 
-    def __call__(cls, path: str | Path, *args: tuple, **kwargs: dict[str, Any]):
+    def __call__(cls, path: str | Path = ":memory:", *args: tuple, **kwargs: dict[str, Any]):
         if cls not in cls._instances:
             instance = super().__call__(path, *args, **kwargs)
             cls._instances[cls] = instance
@@ -36,6 +36,24 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
         This class is responsible for handling the database connection of the library.  
         For each execution, only one instance of this class is allowed to manage a single 
         database connection.
+
+        Parameters:
+            path: path like string that define the SQLite database to load/create.  
+                By default the database is created in memory.
+
+        **Example**
+        ```python
+        from hamana.core import HamanaDtaabase
+
+        # init internal database
+        hamana_db = HamanaDatabase()
+
+        # doing operations..
+        query.to_sqlite(table_name = "t_oracle_output")
+
+        # close connection
+        hamana_db.close()
+        ```
     """
 
     _connection: Connection| None = None
@@ -54,8 +72,10 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
     @classmethod
     def get_instance(cls) -> "HamanaDatabase":
         """
-            Get the instance of the database connection.  
-            This method is used to get the instance of the database connection.
+            Get the instance of the internal database connector.
+
+            Raises:
+                HamanaDatabaseNotInitialised: If the database is not initialized.
         """
         logger.debug("start")
         _instance = cls._instances.get(cls)
@@ -70,6 +90,9 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
     def get_connection(self) -> Connection:
         """
             Get the database connection.
+
+            Raises:
+                HamanaDatabaseNotInitialised: If the database is not initialized.
         """
         logger.debug("start")
         if self._connection is None:
@@ -82,7 +105,8 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
         """
             Close the database connection.  
             Use this method at the end of the process to ensure that the database 
-            connection is properly colsed.
+            connection is properly closed. If the connection is already closed, 
+            this method will log a warning message.
         """
         logger.debug("start")
         if self._connection is None:
