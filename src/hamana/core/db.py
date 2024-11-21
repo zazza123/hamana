@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+from typing import Any, Type
+from types import TracebackType
 from abc import ABCMeta
 from pathlib import Path
 from sqlite3 import Connection, connect
@@ -68,6 +69,10 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
             logger.error("Database connection is not initialized.")
             raise HamanaDatabaseNotInitialised()
         return self._connection
+
+    def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
+        logger.debug("connection not closed for HamanaDatabase, use close() method to close the connection.")
+        return
 
     @classmethod
     def get_instance(cls) -> "HamanaDatabase":
