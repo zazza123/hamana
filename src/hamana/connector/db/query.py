@@ -3,7 +3,7 @@ import logging
 from pandas import DataFrame
 from pydantic import BaseModel
 
-from .exceptions import QueryResultNotAvailable
+from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable
 
 # set logging
 logger = logging.getLogger(__name__)
@@ -127,6 +127,70 @@ class Query:
 
         logger.debug("end")
         return
+
+    def get_insert_query(self, table_name: str) -> str:
+        """
+            This function returns a query to insert the query result into a table.
+
+            Parameters:
+                table_name: name of the table to insert the data.
+
+            Returns:
+                query to insert the data into the table.
+        """
+        logger.debug("start")
+
+        # check columns availablity
+        if self.columns is None:
+            logger.error("no columns available")
+            raise QueryColumnsNotAvailable("no columns available")
+
+        # get columns
+        columns = ", ".join([column.source for column in self.columns])
+        logger.debug("columns string created")
+
+        # get values
+        values = ", ".join(["?" for _ in self.columns])
+        logger.debug("values string created")
+
+        # build query
+        query = f"INSERT INTO {table_name.upper()} ({columns}) VALUES ({values})"
+        logger.info(f"query to insert data into table {table_name} created")
+        logger.info(f"query: {query}")
+
+        logger.debug("end")
+        return query
+
+    def get_create_query(self, table_name: str) -> str:
+        """
+            This function returns a query to create a table based on the query result.
+
+            Parameters:
+                table_name: name of the table to be created.
+
+            Returns:
+                query to create the table.
+        """
+        logger.debug("start")
+
+        # check columns availablity
+        if self.columns is None:
+            logger.error("no columns available")
+            raise QueryColumnsNotAvailable("no columns available")
+
+        # get columns
+        columns = ", ".rjust(4).join([f"{column.source}\n" for column in self.columns])
+        logger.debug("columns string created")
+
+        # build query
+        query = "CREATE TABLE " + table_name.upper() + " (\n" + \
+                "".rjust(4) + ", ".rjust(4).join([f"{column.source}\n" for column in self.columns]) + \
+                ")"
+        logger.info(f"query to create table {table_name} created")
+        logger.info(f"query: {query}")
+
+        logger.debug("end")
+        return query
 
     def __str__(self) -> str:
         return self.query

@@ -5,3 +5,6 @@ class DatabaseConnetionError(HamanaException):
 
 class QueryResultNotAvailable(HamanaException):
     pass
+
+class QueryColumnsNotAvailable(HamanaException):
+    pass
