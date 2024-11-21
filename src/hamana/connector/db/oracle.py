@@ -213,6 +213,11 @@ class OracleConnector(BaseConnector):
                     logger.info(f"query: {query.query}")
                     logger.info(f"parameters: {query.get_params()}")
 
+                    # set columns
+                    if query.columns is None:
+                        logger.info("set query columns")
+                        query.columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+
                     # fetch in batches
                     while True:
                         results = cursor.fetchmany(batch_size)

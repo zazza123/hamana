@@ -87,6 +87,19 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
+        """
+            Function used to extract data from the database and insert it 
+            into the internal SQLite database.
+
+            Parameters:
+                query: query to execute on database.
+                table_name: name of the table to insert the data.
+                batch_size: size of the batch to return.
+        """
+        raise NotImplementedError
+
     @classmethod
     def __subclasshook__(cls, subclass):
         return (
@@ -96,5 +109,6 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             and hasattr(subclass, 'ping') and callable(subclass.ping)
             and hasattr(subclass, 'execute') and callable(subclass.execute)
             and hasattr(subclass, 'batch_execute') and callable(subclass.batch_execute)
+            and hasattr(subclass, 'to_sqlite') and callable(subclass.to_sqlite)
             or NotImplemented
         )

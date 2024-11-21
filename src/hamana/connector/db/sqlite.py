@@ -53,7 +53,7 @@ class SQLiteConnector(BaseConnector):
         try:
             with self as conn:
                 logger.info(f"extracting data (from: {self.path}) ...")
-                
+
                 logger.debug("open cursor")
                 cursor = conn.connection.cursor()
                 logger.debug("cursor opened")
@@ -121,9 +121,18 @@ class SQLiteConnector(BaseConnector):
                 cursor = conn.connection.cursor()
 
                 # execute query
-                cursor.execute(query.query, parameters = query.get_params()) # type: ignore
+                params = query.get_params()
+                if params is not None:
+                    cursor.execute(query.query, params)
+                else:
+                    cursor.execute(query.query)
                 logger.info(f"query: {query.query}")
                 logger.info(f"parameters: {query.get_params()}")
+
+                # set columns
+                if query.columns is None:
+                    logger.info("set query columns")
+                    query.columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
 
                 # fetch in batches
                 while True:
