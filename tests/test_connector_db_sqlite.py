@@ -62,12 +62,27 @@ def test_execute_query_without_meta() -> None:
         available, then is possible to create it using 
         the function create_dummy_sqlite_data.
     """
-    # connect to db
+    # connect to dbß
     db = SQLiteConnector(DB_SQLITE_TEST_PATH)
 
     # execute query
-    query = db.execute("SELECT * FROM t_base_dtypes")
+    query = db.execute("SELECT * FROM t_base_dtypes WHERE c_int = 1")
 
     # check result
     df = query.result
     assert isinstance(df, DataFrame)
+    assert query.columns is not None
+
+    # check columns
+    assert query.columns[0].source == "c_int"
+    assert query.columns[1].source == "c_float"
+    assert query.columns[2].source == "c_string"
+    assert query.columns[3].source == "c_boolean"
+    assert query.columns[4].source == "c_date"
+
+    # check data
+    assert df.c_int.to_list() == [1]
+    assert df.c_float.to_list() == [0.01]
+    assert df.c_string.to_list() == ["string_1"]
+    assert df.c_boolean.to_list() == [1]
+    assert df.c_date.to_list() == ["2021-01-01"]
