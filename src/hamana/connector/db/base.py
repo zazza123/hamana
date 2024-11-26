@@ -1,8 +1,10 @@
 import logging
 from types import TracebackType
-from typing import Type
+from typing import Type, cast
 
-from .query import Query
+from pandas import DataFrame
+
+from .query import Query, QueryColumn
 from .interface import DatabaseConnectorABC
 
 # set logger
@@ -74,6 +76,26 @@ class BaseConnector(DatabaseConnectorABC):
 
         logger.info("data inserted into table")
         hamana_cursor.close()
+
+        logger.debug("end")
+        return
+
+    def _adjust_query_result_df(self, df_result: DataFrame, columns: list[QueryColumn]) -> None:
+        logger.debug("start")
+
+        logger.info("adjust columns")
+        rename = {}
+        for col in sorted(columns, key = lambda col : col.order):
+            rename[col.source] = col.name if col.name else col.source
+        order = list(rename.values())
+
+        # re-name
+        logger.info(f"rename > {rename}")
+        df_result = df_result.rename(columns = rename)
+
+        # re-order
+        logger.info(f"order > {order}")
+        df_result = df_result[order]
 
         logger.debug("end")
         return

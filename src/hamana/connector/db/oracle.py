@@ -175,20 +175,7 @@ class OracleConnector(BaseConnector):
 
         # adjust columns
         if query.columns:
-            logger.info("adjust columns")
-
-            rename = {}
-            for col in sorted(query.columns, key = lambda col : col.order):
-                rename[col.source] = col.name if col.name else col.source
-            order = list(rename.values())
-
-            # re-name
-            logger.info(f"rename > {rename}")
-            df_result = df_result.rename(columns = rename)
-
-            # re-order
-            logger.info(f"order > {order}")
-            df_result = df_result[order]
+            self._adjust_query_result_df(df_result, query.columns)
         else:
             logger.info("query column updated")
             query.columns = columns
