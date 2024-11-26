@@ -2,7 +2,7 @@ import sqlite3
 
 from pandas import DataFrame
 
-from hamana.core.db import HamanaDatabase
+from hamana.connector.db.query import Query, QueryColumn, QueryParam
 from hamana.connector.db.sqlite import SQLiteConnector
 
 DB_SQLITE_TEST_PATH = "tests/data/db/sqlite.db"
@@ -62,11 +62,60 @@ def test_execute_query_without_meta() -> None:
         available, then is possible to create it using 
         the function create_dummy_sqlite_data.
     """
-    # connect to dbß
+    # connect to db
     db = SQLiteConnector(DB_SQLITE_TEST_PATH)
 
     # execute query
     query = db.execute("SELECT * FROM t_base_dtypes WHERE c_int = 1")
+
+    # check result
+    df = query.result
+    assert isinstance(df, DataFrame)
+    assert query.columns is not None
+
+    # check columns
+    assert query.columns[0].source == "c_int"
+    assert query.columns[1].source == "c_float"
+    assert query.columns[2].source == "c_string"
+    assert query.columns[3].source == "c_boolean"
+    assert query.columns[4].source == "c_date"
+
+    # check data
+    assert df.c_int.to_list() == [1]
+    assert df.c_float.to_list() == [0.01]
+    assert df.c_string.to_list() == ["string_1"]
+    assert df.c_boolean.to_list() == [1]
+    assert df.c_date.to_list() == ["2021-01-01"]
+
+def test_execute_query_with_meta() -> None:
+    """
+        Test the execute method passing a simple query 
+        with additional metadata (columns, params).
+
+        The query connect to the test db "data/db/sqlite.db" 
+        and execute a simple SELECT from t_base_dtypes table 
+        to evaluate the result. If the DB or table is not 
+        available, then is possible to create it using 
+        the function create_dummy_sqlite_data.
+    """
+    # connect to db
+    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+
+    # define query
+    query = Query(
+        query = "SELECT * FROM t_base_dtypes WHERE c_int = :row_id",
+        columns = [
+            QueryColumn(order = 0, source = "c_int"),
+            QueryColumn(order = 1, source = "c_float"),
+            QueryColumn(order = 2, source = "c_string"),
+            QueryColumn(order = 3, source = "c_boolean"),
+            QueryColumn(order = 4, source = "c_date")
+        ],
+        params = [QueryParam(name = "row_id", value = 1)]
+    )
+
+    # execute query
+    db.execute(query)
 
     # check result
     df = query.result
