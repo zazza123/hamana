@@ -150,19 +150,29 @@ class OracleConnector(BaseConnector):
         try:
             with self as conn:
                 logger.info(f"extracting data (using: {self.config.user}) ...")
-                with conn.connection.cursor() as cursor:
 
-                    # execute query
-                    cursor.execute(query.query, parameters = query.get_params()) # type: ignore
-                    logger.info(f"query: {query.query}")
-                    logger.info(f"parameters: {query.get_params()}")
+                logger.debug("open cursor")
+                cursor = conn.connection.cursor()
+                logger.debug("cursor opened")
 
-                    # set columns
-                    columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+                # execute query
+                params = query.get_params()
+                if params is not None:
+                    cursor.execute(query.query, params)
+                else:
+                    cursor.execute(query.query)
+                logger.info(f"query: {query.query}")
+                logger.info(f"parameters: {query.get_params()}")
 
-                    # fetch results
-                    result = cursor.fetchall()
-                    logger.info(f"data extracted ({cursor.rowcount} rows)")
+                # set columns
+                columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+
+                # fetch results
+                result = cursor.fetchall()
+                logger.info(f"data extracted ({len(result)} rows)")
+
+                cursor.close()
+                logger.debug("cursor closed")
         except OperationalError as e:
             logger.exception(e)
             raise DatabaseConnetionError(f"unable to establish connection with database")
