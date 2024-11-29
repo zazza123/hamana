@@ -125,7 +125,6 @@ class OracleConnector(BaseConnector):
             logger.exception(e)
             raise DatabaseConnetionError("unable to establish connection with database.")
         except Exception as e:
-            logger.exception(e)
             raise e
 
         logger.debug("end")
@@ -144,7 +143,6 @@ class OracleConnector(BaseConnector):
             logger.exception(e)
             raise DatabaseConnetionError("unable to establish connection with database.")
         except Exception as e:
-            logger.exception(e)
             raise e
 
     def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
@@ -176,7 +174,6 @@ class OracleConnector(BaseConnector):
             logger.exception(e)
             raise DatabaseConnetionError(f"unable to establish connection with database")
         except Exception as e:
-            logger.exception(e)
             raise e
 
         logger.debug("end")

@@ -21,18 +21,6 @@ class SQLiteConnector(BaseConnector):
     def _connect(self) -> Connection:
         return Connection(self.path)
 
-    def ping(self) -> None:
-        logger.debug("start")
-
-        try:
-            super().ping()
-        except Exception as e:
-            logger.exception(e)
-            raise e
-
-        logger.debug("end")
-        return
-
     def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
         logger.debug("start")
 

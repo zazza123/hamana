@@ -39,9 +39,16 @@ class BaseConnector(DatabaseConnectorABC):
 
     def ping(self) -> None:
         logger.debug("start")
-        with self as _:
-            logger.debug("end")
-            return None
+
+        try:
+            with self:
+                logger.info(f"pinging database ...")
+        except Exception as e:
+            logger.exception(e)
+            raise e
+
+        logger.debug("end")
+        return None
 
     @overload
     def execute(self, query: str) -> Query: ...
@@ -142,6 +149,16 @@ class BaseConnector(DatabaseConnectorABC):
         return
 
     def _adjust_query_result_df(self, df_result: DataFrame, columns: list[QueryColumn]) -> None:
+        """
+            This function is used to adjust a DataFrame (usually 
+            the result of a query) based on the columns provided.
+
+            The function renames and re-orders the columns of the DataFrame.
+
+            Parameters:
+                df_result: DataFrame to adjust.
+                columns: list of columns to use for the adjustment
+        """
         logger.debug("start")
 
         logger.info("adjust columns")

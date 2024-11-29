@@ -71,7 +71,14 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
                 query: query to execute on database.
 
             Return:
-                dataframe with the resulting rows.
+                the result depend on the input provided.
+                If query is a string, then the function automatically 
+                creates a Query object, execute the extraction and 
+                return the Query object with the result.
+
+                If query is a Query object, then the function performs 
+                the extraction and return None because the result is stored 
+                in the object itself.
         """
         raise NotImplementedError
 
