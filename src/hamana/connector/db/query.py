@@ -20,14 +20,8 @@ class QueryColumn(BaseModel):
     order: int
     """Order of the column in the query result."""
 
-    source: str
-    """Source name of the column provided by the database result."""
-
-    name: str | None = None
-    """
-        Name of the column to be used in the application. 
-        Observe that the source name is used if the name is not provided.
-    """
+    name: str
+    """Name of the column provided by the database result."""
 
 class QueryParam(BaseModel):
     """
@@ -146,7 +140,7 @@ class Query:
             raise QueryColumnsNotAvailable("no columns available")
 
         # get columns
-        columns = ", ".join([column.source for column in self.columns])
+        columns = ", ".join([column.name for column in self.columns])
         logger.debug("columns string created")
 
         # get values
@@ -178,13 +172,9 @@ class Query:
             logger.error("no columns available")
             raise QueryColumnsNotAvailable("no columns available")
 
-        # get columns
-        columns = ", ".rjust(4).join([f"{column.source}\n" for column in self.columns])
-        logger.debug("columns string created")
-
         # build query
         query = "CREATE TABLE " + table_name.upper() + " (\n" + \
-                "".rjust(4) + ", ".rjust(4).join([f"{column.source}\n" for column in self.columns]) + \
+                "".rjust(4) + ", ".rjust(4).join([f"{column.name}\n" for column in self.columns]) + \
                 ")"
         logger.info(f"query to create table {table_name} created")
         logger.info(f"query: {query}")

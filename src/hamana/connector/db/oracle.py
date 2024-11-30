@@ -162,7 +162,7 @@ class OracleConnector(BaseConnector):
                     # set columns
                     if query.columns is None:
                         logger.info("set query columns")
-                        query.columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+                        query.columns = [QueryColumn(order = i, name = desc[0]) for i, desc in enumerate(cursor.description)]
 
                     # fetch in batches
                     while True:

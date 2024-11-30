@@ -74,11 +74,11 @@ def test_execute_query_without_meta() -> None:
     assert query.columns is not None
 
     # check columns
-    assert query.columns[0].source == "c_int"
-    assert query.columns[1].source == "c_float"
-    assert query.columns[2].source == "c_string"
-    assert query.columns[3].source == "c_boolean"
-    assert query.columns[4].source == "c_date"
+    assert query.columns[0].name == "c_int"
+    assert query.columns[1].name == "c_float"
+    assert query.columns[2].name == "c_string"
+    assert query.columns[3].name == "c_boolean"
+    assert query.columns[4].name == "c_date"
 
     # check data
     assert df.c_int.to_list() == [1]
@@ -105,11 +105,11 @@ def test_execute_query_with_meta() -> None:
     query = Query(
         query = "SELECT * FROM t_base_dtypes WHERE c_int = :row_id",
         columns = [
-            QueryColumn(order = 0, source = "c_int"),
-            QueryColumn(order = 1, source = "c_float"),
-            QueryColumn(order = 2, source = "c_string"),
-            QueryColumn(order = 3, source = "c_boolean"),
-            QueryColumn(order = 4, source = "c_date")
+            QueryColumn(order = 0, name = "c_int"),
+            QueryColumn(order = 1, name = "c_float"),
+            QueryColumn(order = 2, name = "c_string"),
+            QueryColumn(order = 3, name = "c_boolean"),
+            QueryColumn(order = 4, name = "c_date")
         ],
         params = [QueryParam(name = "row_id", value = 1)]
     )
@@ -123,11 +123,11 @@ def test_execute_query_with_meta() -> None:
     assert query.columns is not None
 
     # check columns
-    assert query.columns[0].source == "c_int"
-    assert query.columns[1].source == "c_float"
-    assert query.columns[2].source == "c_string"
-    assert query.columns[3].source == "c_boolean"
-    assert query.columns[4].source == "c_date"
+    assert query.columns[0].name == "c_int"
+    assert query.columns[1].name == "c_float"
+    assert query.columns[2].name == "c_string"
+    assert query.columns[3].name == "c_boolean"
+    assert query.columns[4].name == "c_date"
 
     # check data
     assert df.c_int.to_list() == [1]

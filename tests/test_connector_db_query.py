@@ -7,9 +7,9 @@ from hamana.core.db import HamanaDatabase
 from hamana.connector.db.query import Query, QueryColumn, QueryColumnsNotAvailable, QueryResultNotAvailable
 
 columns = [
-    QueryColumn(order = 1, source = "id"),
-    QueryColumn(order = 2, source = "name"),
-    QueryColumn(order = 3, source = "age")
+    QueryColumn(order = 1, name = "id"),
+    QueryColumn(order = 2, name = "name"),
+    QueryColumn(order = 3, name = "age")
 ]
 query = Query(
     query = "SELECT * FROM users",
@@ -55,10 +55,10 @@ def test_to_sqlite_success() -> None:
     query = Query(
         query = "SELECT * FROM t_query_to_sqlite",
         columns = [
-            QueryColumn(order = 1, source = "c_number"),
-            QueryColumn(order = 2, source = "c_string"),
-            QueryColumn(order = 3, source = "c_boolean"),
-            QueryColumn(order = 4, source = "c_date")
+            QueryColumn(order = 1, name = "c_number"),
+            QueryColumn(order = 2, name = "c_string"),
+            QueryColumn(order = 3, name = "c_boolean"),
+            QueryColumn(order = 4, name = "c_date")
         ]
     )
 

@@ -83,7 +83,7 @@ class BaseConnector(DatabaseConnectorABC):
                 logger.info(f"parameters: {query.get_params()}")
 
                 # set columns
-                columns = [QueryColumn(order = i, source = desc[0]) for i, desc in enumerate(cursor.description)]
+                columns = [QueryColumn(order = i, name = desc[0]) for i, desc in enumerate(cursor.description)]
 
                 # fetch results
                 result = cursor.fetchall()
@@ -96,7 +96,7 @@ class BaseConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("convert to Dataframe")
-        df_result = DataFrame(result, columns = [column.source for column in columns])
+        df_result = DataFrame(result, columns = [column.name for column in columns])
 
         # adjust columns
         if query.columns:
@@ -162,14 +162,9 @@ class BaseConnector(DatabaseConnectorABC):
         logger.debug("start")
 
         logger.info("adjust columns")
-        rename = {}
+        order =  []
         for col in sorted(columns, key = lambda col : col.order):
-            rename[col.source] = col.name if col.name else col.source
-        order = list(rename.values())
-
-        # re-name
-        logger.info(f"rename > {rename}")
-        df_result = df_result.rename(columns = rename)
+            order.append(col.name)
 
         # re-order
         logger.info(f"order > {order}")
