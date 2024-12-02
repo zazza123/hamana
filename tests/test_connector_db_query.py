@@ -31,9 +31,9 @@ def test_get_create_query_success() -> None:
     """Test get_create_query method."""
     expected_query = (
         "CREATE TABLE USERS (\n"
-        "    id\n"
-        "  , name\n"
-        "  , age\n"
+        "    id TEXT\n"
+        "  , name TEXT\n"
+        "  , age TEXT\n"
         ")"
     )
     assert query.get_create_query("users") == expected_query

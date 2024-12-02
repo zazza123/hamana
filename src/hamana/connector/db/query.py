@@ -1,4 +1,5 @@
 import logging
+from enum import Flag, auto
 
 from pandas import DataFrame
 from pydantic import BaseModel
@@ -11,6 +12,81 @@ logger = logging.getLogger(__name__)
 # param value custom type
 ParamValue = int | float | str | bool
 
+class ColumnDataType(Flag):
+    """
+        Enumeration to represent the data types of the columns.
+    """
+
+    INTEGER = auto()
+    """Integer data type."""
+
+    NUMBER = auto()
+    """Number data type."""
+
+    TEXT = auto()
+    """String data type."""
+
+    BOOLEAN = auto()
+    """Boolean data type."""
+
+    DATETIME = auto()
+    """Date data type."""
+
+    TIMESTAMP = auto()
+    """Timestamp data type."""
+
+    @classmethod
+    def from_pandas(cls, dtype: str) -> "ColumnDataType":
+        """
+            Function to map a pandas data type to a ColumnDataType.
+
+            Parameters:
+                dtype: pandas data type.
+
+            Returns:
+                ColumnDataType mapped from the pandas data type.
+        """
+        if "int" in dtype:
+            return ColumnDataType.INTEGER
+        elif "float" in dtype:
+            return ColumnDataType.NUMBER
+        elif dtype == "object":
+            return ColumnDataType.TEXT
+        elif dtype == "bool":
+            return ColumnDataType.BOOLEAN
+        elif dtype == "datetime64":
+            return ColumnDataType.DATETIME
+        elif dtype == "datetime64[ns, UTC]":
+            return ColumnDataType.TIMESTAMP
+        else:
+            return ColumnDataType.TEXT
+
+    @classmethod
+    def to_sqlite(cls, dtype: "ColumnDataType") -> str:
+        """
+            Function to map a ColumnDataType to a SQLite data type.
+
+            Parameters:
+                dtype: ColumnDataType to be mapped.
+
+            Returns:
+                SQLite data type mapped from the ColumnDataType.
+        """
+        if dtype == ColumnDataType.INTEGER:
+            return "INTEGER"
+        elif dtype == ColumnDataType.NUMBER:
+            return "REAL"
+        elif dtype == ColumnDataType.TEXT:
+            return "TEXT"
+        elif dtype == ColumnDataType.BOOLEAN:
+            return "NUMERIC"
+        elif dtype == ColumnDataType.DATETIME:
+            return "TEXT"
+        elif dtype == ColumnDataType.TIMESTAMP:
+            return "NUMERIC"
+        else:
+            return ""
+
 class QueryColumn(BaseModel):
     """
         Class to represent a column returned by a query. 
@@ -22,6 +98,12 @@ class QueryColumn(BaseModel):
 
     name: str
     """Name of the column provided by the database result."""
+
+    dtype: ColumnDataType = ColumnDataType.TEXT
+    """
+        Data type of the column.  
+        The data type is used to map the column to the application data.
+    """
 
 class QueryParam(BaseModel):
     """
@@ -109,11 +191,11 @@ class Query:
 
         # get instance
         db = HamanaDatabase.get_instance()
-        with db as conn:
+        with db:
             logger.debug(f"inserting data into table {table_name}")
             self.result.to_sql(
                 name = table_name,
-                con = conn.connection,
+                con = db.connection,
                 if_exists = "replace",
                 index = False
             )
@@ -174,7 +256,7 @@ class Query:
 
         # build query
         query = "CREATE TABLE " + table_name.upper() + " (\n" + \
-                "".rjust(4) + ", ".rjust(4).join([f"{column.name}\n" for column in self.columns]) + \
+                "".rjust(4) + ", ".rjust(4).join([f"{column.name} {ColumnDataType.to_sqlite(column.dtype)}\n" for column in self.columns]) + \
                 ")"
         logger.info(f"query to create table {table_name} created")
         logger.info(f"query: {query}")

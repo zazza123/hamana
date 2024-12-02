@@ -4,7 +4,7 @@ from typing import Type, overload
 
 from pandas import DataFrame
 
-from .query import Query, QueryColumn
+from .query import Query, QueryColumn, ColumnDataType
 from .interface import DatabaseConnectorABC
 
 # set logger
@@ -83,7 +83,7 @@ class BaseConnector(DatabaseConnectorABC):
                 logger.info(f"parameters: {query.get_params()}")
 
                 # set columns
-                columns = [QueryColumn(order = i, name = desc[0]) for i, desc in enumerate(cursor.description)]
+                columns = [desc[0] for desc in cursor.description]
 
                 # fetch results
                 result = cursor.fetchall()
@@ -96,14 +96,27 @@ class BaseConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("convert to Dataframe")
-        df_result = DataFrame(result, columns = [column.name for column in columns])
+        df_result = DataFrame(result, columns = columns)
 
         # adjust columns
         if query.columns:
             self._adjust_query_result_df(df_result, query.columns)
         else:
+            logger.debug("update query columns ...")
+            df_dtype = df_result.dtypes
+            query_columns = []
+
+            for i, column in enumerate(columns):
+                query_columns.append(
+                    QueryColumn(
+                        order = i,
+                        name = column,
+                        dtype = ColumnDataType.from_pandas(df_dtype[column].__str__())
+                    )
+                )
+
             logger.info("query column updated")
-            query.columns = columns
+            query.columns = query_columns
 
         # set query result
         query.result = df_result
