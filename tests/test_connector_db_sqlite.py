@@ -1,53 +1,13 @@
-import sqlite3
-
 from pandas import DataFrame
 
-from hamana.connector.db.query import Query, QueryColumn, QueryParam
+from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType
 from hamana.connector.db.sqlite import SQLiteConnector
 
-DB_SQLITE_TEST_PATH = "tests/data/db/sqlite.db"
-
-# create dummy data
-def create_dummy_sqlite_data(db_path: str) -> None:
-    """
-        Function to create dummy data on a SQLite database.
-
-        Parameters:
-            db_path: Path to the SQLite database.
-    """
-
-    # connect to database
-    connection = sqlite3.connect(db_path)
-    cursor = connection.cursor()
-
-    # create table
-    cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS t_base_dtypes (
-            c_int       INTEGER,
-            c_float     NUMERIC,
-            c_string    TEXT,
-            c_boolean   INTEGER,
-            c_date      TEXT
-        )"""
-    )
-
-    # insert dummy data
-    dummy_data = [
-        [1, 0.01, "string_1", 1, "2021-01-01"],
-        [2, 10.2, "string_2", 0, "2021-01-02"],
-        [3, -1.3, "string_3", 1, "2021-01-03"]
-    ]
-    cursor.executemany("INSERT INTO t_base_dtypes (c_int, c_float, c_string, c_boolean, c_date) VALUES (?, ?, ?, ?, ?)", dummy_data)
-    connection.commit()
-
-    # close connection
-    cursor.close()
-    connection.close()
-    return
+DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
 def test_ping() -> None:
     """Test ping method."""
-    db = SQLiteConnector(":memory:")
+    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     db.ping()
     return
 
@@ -56,17 +16,23 @@ def test_execute_query_without_meta() -> None:
         Test the execute method passing a simple query 
         without any additional metadata (columns, params).
 
-        The query connect to the test db "data/db/sqlite.db" 
-        and execute a simple SELECT from t_base_dtypes table 
+        The query connect to the test db `data/db/test.db` 
+        and execute a simple SELECT from `t_dtypes` table 
         to evaluate the result. If the DB or table is not 
-        available, then is possible to create it using 
-        the function create_dummy_sqlite_data.
+        available, then is possible to init it by running 
+        the file `tests/init_test_db.py`.
+
+        **Note**: observe that the dtype of the columns is derived 
+        from the DataFrame dtype, and may not coincide with the 
+        'logical' type of the column in the database. 
+        For example, the column c_boolean is stored as INTEGER in 
+        the database, even if it intended to be boolean (0 or 1).
     """
     # connect to db
     db = SQLiteConnector(DB_SQLITE_TEST_PATH)
 
     # execute query
-    query = db.execute("SELECT * FROM t_base_dtypes WHERE c_int = 1")
+    query = db.execute("SELECT * FROM t_dtypes WHERE c_integer = 1")
 
     # check result
     df = query.result
@@ -74,42 +40,54 @@ def test_execute_query_without_meta() -> None:
     assert query.columns is not None
 
     # check columns
-    assert query.columns[0].name == "c_int"
-    assert query.columns[1].name == "c_float"
-    assert query.columns[2].name == "c_string"
+    assert query.columns[0].name == "c_integer"
+    assert query.columns[1].name == "c_number"
+    assert query.columns[2].name == "c_text"
     assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_date"
+    assert query.columns[4].name == "c_datetime"
+    assert query.columns[5].name == "c_timestamp"
 
     # check data
-    assert df.c_int.to_list() == [1]
-    assert df.c_float.to_list() == [0.01]
-    assert df.c_string.to_list() == ["string_1"]
+    assert df.c_integer.to_list() == [1]
+    assert df.c_number.to_list() == [0.01]
+    assert df.c_text.to_list() == ["string_1"]
     assert df.c_boolean.to_list() == [1]
-    assert df.c_date.to_list() == ["2021-01-01"]
+    assert df.c_datetime.to_list() == ["2021-01-01"]
+    assert df.c_timestamp.to_list() == [1609455600]
+
+    # check dtype
+    assert query.columns[0].dtype == ColumnDataType.INTEGER
+    assert query.columns[1].dtype == ColumnDataType.NUMBER
+    assert query.columns[2].dtype == ColumnDataType.TEXT
+    assert query.columns[3].dtype == ColumnDataType.INTEGER
+    assert query.columns[4].dtype == ColumnDataType.TEXT
+    assert query.columns[5].dtype == ColumnDataType.INTEGER
+
 
 def test_execute_query_with_meta() -> None:
     """
         Test the execute method passing a simple query 
-        with additional metadata (columns, params).
+        with additional metadata (columns, params, dtype).
 
-        The query connect to the test db "data/db/sqlite.db" 
-        and execute a simple SELECT from t_base_dtypes table 
+        The query connect to the test db `data/db/test.db` 
+        and execute a simple SELECT from `t_dtypes` table 
         to evaluate the result. If the DB or table is not 
-        available, then is possible to create it using 
-        the function create_dummy_sqlite_data.
+        available, then is possible to init it by running 
+        the file `tests/init_test_db.py`.
     """
     # connect to db
     db = SQLiteConnector(DB_SQLITE_TEST_PATH)
 
     # define query
     query = Query(
-        query = "SELECT * FROM t_base_dtypes WHERE c_int = :row_id",
+        query = "SELECT * FROM t_dtypes WHERE c_integer = :row_id",
         columns = [
-            QueryColumn(order = 0, name = "c_int"),
-            QueryColumn(order = 1, name = "c_float"),
-            QueryColumn(order = 2, name = "c_string"),
-            QueryColumn(order = 3, name = "c_boolean"),
-            QueryColumn(order = 4, name = "c_date")
+            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
+            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
+            QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
+            QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
+            QueryColumn(order = 4, name = "c_datetime", dtype = ColumnDataType.DATETIME),
+            QueryColumn(order = 5, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
         ],
         params = [QueryParam(name = "row_id", value = 1)]
     )
@@ -123,15 +101,17 @@ def test_execute_query_with_meta() -> None:
     assert query.columns is not None
 
     # check columns
-    assert query.columns[0].name == "c_int"
-    assert query.columns[1].name == "c_float"
-    assert query.columns[2].name == "c_string"
+    assert query.columns[0].name == "c_integer"
+    assert query.columns[1].name == "c_number"
+    assert query.columns[2].name == "c_text"
     assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_date"
+    assert query.columns[4].name == "c_datetime"
+    assert query.columns[5].name == "c_timestamp"
 
     # check data
-    assert df.c_int.to_list() == [1]
-    assert df.c_float.to_list() == [0.01]
-    assert df.c_string.to_list() == ["string_1"]
+    assert df.c_integer.to_list() == [1]
+    assert df.c_number.to_list() == [0.01]
+    assert df.c_text.to_list() == ["string_1"]
     assert df.c_boolean.to_list() == [1]
-    assert df.c_date.to_list() == ["2021-01-01"]
+    assert df.c_datetime.to_list() == ["2021-01-01"]
+    assert df.c_timestamp.to_list() == [1609455600]

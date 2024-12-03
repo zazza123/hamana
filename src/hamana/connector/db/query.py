@@ -79,7 +79,7 @@ class ColumnDataType(Flag):
         elif dtype == ColumnDataType.TEXT:
             return "TEXT"
         elif dtype == ColumnDataType.BOOLEAN:
-            return "NUMERIC"
+            return "INTEGER"
         elif dtype == ColumnDataType.DATETIME:
             return "TEXT"
         elif dtype == ColumnDataType.TIMESTAMP:
