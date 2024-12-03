@@ -2,11 +2,11 @@ import logging
 from types import TracebackType
 from typing import Type, overload
 
-from pandas import DataFrame
+from pandas import DataFrame, to_datetime
 
 from .query import Query, QueryColumn, ColumnDataType
 from .interface import DatabaseConnectorABC
-from .exceptions import QueryColumnsNotAvailable
+from .exceptions import QueryColumnsNotAvailable, ColumnDataTypeConversionError
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -196,6 +196,41 @@ class BaseConnector(DatabaseConnectorABC):
             df_result = df_result[columns_query]
         else:
             logger.info("columns already in the correct order")
+
+        # check data types
+        logger.info("check data types")
+        dtypes_df = df_result.dtypes
+        for column in columns:
+            dtype_query = column.dtype
+            dtype_df = ColumnDataType.from_pandas(dtypes_df[column.name].name)
+            logger.debug(f"column: {column.name}")
+            logger.debug(f"datatype (query): {dtype_query}")
+            logger.debug(f"datatype (df): {dtype_df}")
+
+            if dtype_query != dtype_df:
+                try:
+                    logger.info(f"different datatype for {column.name}")
+                    logger.info(f"datatype (query): {dtype_query}")
+                    logger.info(f"datatype (df): {dtype_df}")
+
+                    match dtype_query:
+                        case ColumnDataType.INTEGER:
+                            df_result[column.name] = df_result[column.name].astype("int64")
+                        case ColumnDataType.NUMBER:
+                            df_result[column.name] = df_result[column.name].astype("float64")
+                        case ColumnDataType.TEXT:
+                            df_result[column.name] = df_result[column.name].astype("object")
+                        case ColumnDataType.BOOLEAN:
+                            df_result[column.name] = df_result[column.name].astype("bool")
+                        case ColumnDataType.DATETIME:
+                            df_result[column.name] = to_datetime(df_result[column.name])
+                        case ColumnDataType.TIMESTAMP:
+                            df_result[column.name] = to_datetime(df_result[column.name], unit = "s")
+
+                except Exception as e:
+                    logger.error("ERROR: on datatype change")
+                    logger.error(e)
+                    raise ColumnDataTypeConversionError(f"ERROR: on datatype change for {column.name}")
 
         logger.debug("end")
         return df_result

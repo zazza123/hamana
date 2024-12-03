@@ -1,6 +1,7 @@
 import pytest
+from datetime import datetime
 
-from pandas import DataFrame
+import pandas as pd
 
 from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable
@@ -39,7 +40,7 @@ def test_execute_query_without_meta() -> None:
 
     # check result
     df = query.result
-    assert isinstance(df, DataFrame)
+    assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
     # check columns
@@ -100,7 +101,7 @@ def test_execute_query_with_meta() -> None:
 
     # check result
     df = query.result
-    assert isinstance(df, DataFrame)
+    assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
     # check columns
@@ -111,13 +112,21 @@ def test_execute_query_with_meta() -> None:
     assert query.columns[4].name == "c_datetime"
     assert query.columns[5].name == "c_timestamp"
 
+    # check dtype
+    assert df.c_integer.dtype.name      == "int64"
+    assert df.c_number.dtype.name       == "float64"
+    assert df.c_text.dtype.name         == "object"
+    assert df.c_boolean.dtype.name      == "bool"
+    assert df.c_datetime.dtype.name     == "datetime64[ns]"
+    assert df.c_timestamp.dtype.name    == "datetime64[ns]"
+
     # check data
     assert df.c_integer.to_list() == [1]
     assert df.c_number.to_list() == [0.01]
     assert df.c_text.to_list() == ["string_1"]
-    assert df.c_boolean.to_list() == [1]
-    assert df.c_datetime.to_list() == ["2021-01-01"]
-    assert df.c_timestamp.to_list() == [1609455600]
+    assert df.c_boolean.to_list() == [True]
+    assert df.c_datetime.to_list() == [datetime(2021, 1, 1)]
+    assert df.c_timestamp.to_list() == [pd.Timestamp("2020-12-31 23:00:00")]
 
 def test_execute_query_re_order_column() -> None:
     """
@@ -143,7 +152,7 @@ def test_execute_query_re_order_column() -> None:
 
     # check result
     df = query.result
-    assert isinstance(df, DataFrame)
+    assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
     # check columns

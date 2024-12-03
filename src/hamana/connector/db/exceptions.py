@@ -8,3 +8,6 @@ class QueryResultNotAvailable(HamanaException):
 
 class QueryColumnsNotAvailable(HamanaException):
     pass
+
+class ColumnDataTypeConversionError(HamanaException):
+    pass
