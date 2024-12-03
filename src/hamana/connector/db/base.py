@@ -6,6 +6,7 @@ from pandas import DataFrame
 
 from .query import Query, QueryColumn, ColumnDataType
 from .interface import DatabaseConnectorABC
+from .exceptions import QueryColumnsNotAvailable
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -100,7 +101,7 @@ class BaseConnector(DatabaseConnectorABC):
 
         # adjust columns
         if query.columns:
-            self._adjust_query_result_df(df_result, query.columns)
+            df_result = self._adjust_query_result_df(df_result, query.columns)
         else:
             logger.debug("update query columns ...")
             df_dtype = df_result.dtypes
@@ -161,12 +162,13 @@ class BaseConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    def _adjust_query_result_df(self, df_result: DataFrame, columns: list[QueryColumn]) -> None:
+    def _adjust_query_result_df(self, df_result: DataFrame, columns: list[QueryColumn]) -> DataFrame:
         """
             This function is used to adjust a DataFrame (usually 
             the result of a query) based on the columns provided.
 
-            The function renames and re-orders the columns of the DataFrame.
+            The function re-orders the columns of the DataFrame 
+            and check the data types.
 
             Parameters:
                 df_result: DataFrame to adjust.
@@ -174,14 +176,26 @@ class BaseConnector(DatabaseConnectorABC):
         """
         logger.debug("start")
 
-        logger.info("adjust columns")
-        order =  []
+        # get columns
+        columns_query = []
+        columns_df = df_result.columns.to_list()
+
+        logger.info("get query columns ordered")
         for col in sorted(columns, key = lambda col : col.order):
-            order.append(col.name)
+            columns_query.append(col.name)
+
+        # check columns_query is a substte of columns_df
+        if not set(columns_query).issubset(columns_df):
+            logger.error("columns do not match between query and resuls")
+            raise QueryColumnsNotAvailable(f"columns do not match {set(columns_query).difference(columns_df)}")
 
         # re-order
-        logger.info(f"order > {order}")
-        df_result = df_result[order]
+        if columns_query != columns_df:
+            logger.info("re-ordering columns")
+            logger.info(f"order > {columns_query}")
+            df_result = df_result[columns_query]
+        else:
+            logger.info("columns already in the correct order")
 
         logger.debug("end")
-        return
+        return df_result

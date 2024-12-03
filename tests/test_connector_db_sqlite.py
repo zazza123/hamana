@@ -1,6 +1,9 @@
+import pytest
+
 from pandas import DataFrame
 
 from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType
+from hamana.connector.db.exceptions import QueryColumnsNotAvailable
 from hamana.connector.db.sqlite import SQLiteConnector
 
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
@@ -115,3 +118,56 @@ def test_execute_query_with_meta() -> None:
     assert df.c_boolean.to_list() == [1]
     assert df.c_datetime.to_list() == ["2021-01-01"]
     assert df.c_timestamp.to_list() == [1609455600]
+
+def test_execute_query_re_order_column() -> None:
+    """
+        Tesf the correct adjustment of the column 
+        order for the result DataFrame from a query 
+        execution.
+    """
+    # connect to db
+    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+
+    # define query
+    query = Query(
+        query = "SELECT * FROM t_dtypes",
+        columns = [
+            QueryColumn(order = 2, name = "c_integer", dtype = ColumnDataType.INTEGER),
+            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
+            QueryColumn(order = 0, name = "c_text", dtype = ColumnDataType.TEXT)
+        ]
+    )
+
+    # execute query
+    db.execute(query)
+
+    # check result
+    df = query.result
+    assert isinstance(df, DataFrame)
+    assert query.columns is not None
+
+    # check columns
+    assert query.result.columns.to_list() == ["c_text", "c_number", "c_integer"] # type: ignore
+
+def test_execute_query_missing_column() -> None:
+    """
+        Ensure the rise of an error when the query 
+        is configured to have a column that is not 
+        available in the result DataFrame.
+    """
+
+    # connect to db
+    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+
+    # define query
+    query = Query(
+        query = "SELECT * FROM t_dtypes",
+        columns = [
+            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
+            QueryColumn(order = 1, name = "c_error")
+        ]
+    )
+
+    # execute query
+    with pytest.raises(QueryColumnsNotAvailable):
+        db.execute(query)
