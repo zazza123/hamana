@@ -6,7 +6,7 @@ DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 # create dummy data
 def create_sqlite_dtype_table(db_path: str) -> None:
     """
-        Function to create the table `t_dtypes` on a SQLite database. 
+        Function to create the table `T_DTYPES` on a SQLite database. 
         This table is used to test the dtype conversion.
 
         Parameters:
@@ -19,7 +19,7 @@ def create_sqlite_dtype_table(db_path: str) -> None:
 
     # create table
     cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS t_dtypes (
+        CREATE TABLE IF NOT EXISTS T_DTYPES (
             c_integer   INTEGER,
             c_number    REAL,
             c_text      TEXT,
@@ -35,7 +35,7 @@ def create_sqlite_dtype_table(db_path: str) -> None:
         [2, 10.2, "string_2", 0, "2021-01-02", int(datetime(2021, 1, 2).timestamp())],
         [3, -1.3, "string_3", 1, "2021-01-03", int(datetime(2021, 1, 3).timestamp())],
     ]
-    cursor.executemany("INSERT INTO t_dtypes (c_integer, c_number, c_text, c_boolean, c_datetime, c_timestamp) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
+    cursor.executemany("INSERT INTO T_DTYPES (c_integer, c_number, c_text, c_boolean, c_datetime, c_timestamp) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
     connection.commit()
 
     # close connection

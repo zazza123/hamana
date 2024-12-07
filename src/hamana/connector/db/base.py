@@ -128,6 +128,7 @@ class BaseConnector(DatabaseConnectorABC):
     def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
         logger.debug("start")
 
+        table_name_upper = table_name.upper()
         insert_query: str | None = None
 
         # import internal database
@@ -146,17 +147,17 @@ class BaseConnector(DatabaseConnectorABC):
 
             if insert_query is None:
                 logger.info("generating insert query")
-                insert_query = query.get_insert_query(table_name)
+                insert_query = query.get_insert_query(table_name_upper)
 
-                logger.info(f"creating table {table_name}")
-                hamana_cursor.execute(query.get_create_query(table_name))
+                logger.info(f"creating table {table_name_upper}")
+                hamana_cursor.execute(query.get_create_query(table_name_upper))
                 hamana_connection.commit()
                 logger.debug("table created")
 
             hamana_cursor.executemany(insert_query, row_batch)
             hamana_connection.commit()
 
-        logger.info("data inserted into table")
+        logger.info(f"data inserted into table {table_name_upper}")
         hamana_cursor.close()
 
         logger.debug("end")
@@ -168,7 +169,8 @@ class BaseConnector(DatabaseConnectorABC):
             the result of a query) based on the columns provided.
 
             The function re-orders the columns of the DataFrame 
-            and check the data types.
+            and check the data types; if they do not match, then 
+            the function will try to convert the requested one.
 
             Parameters:
                 df_result: DataFrame to adjust.
@@ -184,7 +186,7 @@ class BaseConnector(DatabaseConnectorABC):
         for col in sorted(columns, key = lambda col : col.order):
             columns_query.append(col.name)
 
-        # check columns_query is a substte of columns_df
+        # check columns_query is a subset of columns_df
         if not set(columns_query).issubset(columns_df):
             logger.error("columns do not match between query and resuls")
             raise QueryColumnsNotAvailable(f"columns do not match {set(columns_query).difference(columns_df)}")
@@ -201,6 +203,7 @@ class BaseConnector(DatabaseConnectorABC):
         logger.info("check data types")
         dtypes_df = df_result.dtypes
         for column in columns:
+
             dtype_query = column.dtype
             dtype_df = ColumnDataType.from_pandas(dtypes_df[column.name].name)
             logger.debug(f"column: {column.name}")
@@ -225,7 +228,7 @@ class BaseConnector(DatabaseConnectorABC):
                         case ColumnDataType.DATETIME:
                             df_result[column.name] = to_datetime(df_result[column.name])
                         case ColumnDataType.TIMESTAMP:
-                            df_result[column.name] = to_datetime(df_result[column.name], unit = "s")
+                            df_result[column.name] = to_datetime(df_result[column.name], unit = "s", origin = "unix")
 
                 except Exception as e:
                     logger.error("ERROR: on datatype change")

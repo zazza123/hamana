@@ -97,13 +97,27 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
     @abstractmethod
     def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
         """
-            Function used to extract data from the database and insert it 
-            into the internal SQLite database.
+            This function is used to extract data from the database and insert it 
+            into the `hamana` internal database (HamanaDatabase).
+
+            The `hamana` db is a SQLite database, for this reason 
+            `bool`, `datetime` and `timestamp` data types are supported.
+            If some of the columns are defined with these data types, 
+            then the method performs an automatic conversion to a SQLite data type.
+
+            In particular, the conversions are:
+            - `bool` columns are mapped to `INTEGER` data type, with the values 
+            `True` and `False` converted to `1` and `0`.
+            - `datetime` columns are mapped to `TEXT` data type, with the values 
+            converted to a string in the format `YYYY-MM-DD`.
+            - `timestamp` columns are mapped to `NUMERIC` data type, with the values
+            converted to a float representing the Unix timestamp.
 
             Parameters:
                 query: query to execute on database.
                 table_name: name of the table to insert the data.
-                batch_size: size of the batch to return.
+                    By assumption, the table's name is converted to uppercase.
+                batch_size: size of the batch used during the inserting process.
         """
         raise NotImplementedError
 

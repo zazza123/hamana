@@ -21,7 +21,7 @@ def test_execute_query_without_meta() -> None:
         without any additional metadata (columns, params).
 
         The query connect to the test db `data/db/test.db` 
-        and execute a simple SELECT from `t_dtypes` table 
+        and execute a simple SELECT from `T_DTYPES` table 
         to evaluate the result. If the DB or table is not 
         available, then is possible to init it by running 
         the file `tests/init_test_db.py`.
@@ -36,7 +36,7 @@ def test_execute_query_without_meta() -> None:
     db = SQLiteConnector(DB_SQLITE_TEST_PATH)
 
     # execute query
-    query = db.execute("SELECT * FROM t_dtypes WHERE c_integer = 1")
+    query = db.execute("SELECT * FROM T_DTYPES WHERE c_integer = 1")
 
     # check result
     df = query.result
@@ -74,7 +74,7 @@ def test_execute_query_with_meta() -> None:
         with additional metadata (columns, params, dtype).
 
         The query connect to the test db `data/db/test.db` 
-        and execute a simple SELECT from `t_dtypes` table 
+        and execute a simple SELECT from `T_DTYPES` table 
         to evaluate the result. If the DB or table is not 
         available, then is possible to init it by running 
         the file `tests/init_test_db.py`.
@@ -84,7 +84,7 @@ def test_execute_query_with_meta() -> None:
 
     # define query
     query = Query(
-        query = "SELECT * FROM t_dtypes WHERE c_integer = :row_id",
+        query = "SELECT * FROM T_DTYPES WHERE c_integer = :row_id",
         columns = [
             QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
             QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
@@ -139,7 +139,7 @@ def test_execute_query_re_order_column() -> None:
 
     # define query
     query = Query(
-        query = "SELECT * FROM t_dtypes",
+        query = "SELECT * FROM T_DTYPES",
         columns = [
             QueryColumn(order = 2, name = "c_integer", dtype = ColumnDataType.INTEGER),
             QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
@@ -170,7 +170,7 @@ def test_execute_query_missing_column() -> None:
 
     # define query
     query = Query(
-        query = "SELECT * FROM t_dtypes",
+        query = "SELECT * FROM T_DTYPES",
         columns = [
             QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
             QueryColumn(order = 1, name = "c_error")
