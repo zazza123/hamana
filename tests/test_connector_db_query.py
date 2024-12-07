@@ -1,10 +1,14 @@
 import pytest
+from typing import cast
 from datetime import datetime
 
 from pandas import DataFrame
 
 from hamana.core.db import HamanaDatabase
-from hamana.connector.db.query import Query, QueryColumn, QueryColumnsNotAvailable, QueryResultNotAvailable
+from hamana.connector.db.query import Query, QueryColumn, ColumnDataType
+from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable
+
+DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
 columns = [
     QueryColumn(order = 1, name = "id"),
@@ -18,17 +22,20 @@ query = Query(
 
 def test_get_insert_query_success() -> None:
     """Test get_insert_query method."""
+
     expected_query = "INSERT INTO USERS (id, name, age) VALUES (?, ?, ?)"
     assert query.get_insert_query("users") == expected_query
 
 def test_get_insert_query_no_columns() -> None:
     """Test get_insert_query method with no columns."""
+
     query = Query(query = "SELECT * FROM users")
     with pytest.raises(QueryColumnsNotAvailable):
         query.get_insert_query("users")
 
 def test_get_create_query_success() -> None:
     """Test get_create_query method."""
+
     expected_query = (
         "CREATE TABLE USERS (\n"
         "    id TEXT\n"
@@ -40,6 +47,7 @@ def test_get_create_query_success() -> None:
 
 def test_get_create_query_no_columns() -> None:
     """Test get_create_query method with no columns."""
+
     query = Query(query = "SELECT * FROM users")
     with pytest.raises(QueryColumnsNotAvailable):
         query.get_create_query("users")
@@ -53,45 +61,70 @@ def test_to_sqlite_success() -> None:
 
     # create query
     query = Query(
-        query = "SELECT * FROM t_query_to_sqlite",
+        query = "SELECT * FROM T_QUERY_TO_SQLITE",
         columns = [
-            QueryColumn(order = 1, name = "c_number"),
-            QueryColumn(order = 2, name = "c_string"),
-            QueryColumn(order = 3, name = "c_boolean"),
-            QueryColumn(order = 4, name = "c_date")
+            QueryColumn(order = 1, name = "c_integer", dtype = ColumnDataType.INTEGER),
+            QueryColumn(order = 2, name = "c_number", dtype = ColumnDataType.NUMBER),
+            QueryColumn(order = 3, name = "c_text", dtype = ColumnDataType.TEXT),
+            QueryColumn(order = 4, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
+            QueryColumn(order = 5, name = "c_datetime", dtype = ColumnDataType.DATETIME),
+            QueryColumn(order = 6, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
         ]
     )
 
     # set result
     query.result = DataFrame({
-        "c_number": [1, 2, 3],
-        "c_string": ["a", "b", "c"],
-        "c_boolean": [True, False, True],
-        "c_date": [datetime(2021, 1, 1), datetime(2021, 1, 2), datetime(2021, 1, 3)]
+        "c_integer": [1],
+        "c_number": [3.14],
+        "c_text": ["text"],
+        "c_boolean": [True],
+        "c_datetime": [datetime(2021, 1, 1)],
+        "c_timestamp": [datetime(2021, 1, 1, 1, 1, 1)]
     })
 
     # init database
-    hamana_db = HamanaDatabase("tests/data/db/test.db")
+    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
 
     # insert
-    query.to_sqlite("t_query_to_sqlite")
+    query.to_sqlite("T_QUERY_TO_SQLITE")
 
-    # check
-    query_on_db = hamana_db.execute("SELECT * FROM t_query_to_sqlite")
+    # check (no columns metadata)
+    query_on_db = hamana_db.execute("SELECT * FROM T_QUERY_TO_SQLITE")
 
-    # columns
-    assert query.result.c_number.dtypes == query_on_db.result.c_number.dtypes # type: ignore
-    assert query.result.c_string.dtypes == query_on_db.result.c_string.dtypes # type: ignore
-    # TODO: manage date and bool columns
-    #assert query.result.c_boolean.dtypes == query_on_db.result.c_boolean.dtypes # type: ignore
-    #assert query.result.c_date.dtypes == query_on_db.result.c_date.dtypes # type: ignore
+    # check columns
+    query_on_db.columns = cast(list[QueryColumn], query_on_db.columns)
+    assert query_on_db.columns[0].name == "c_integer"
+    assert query_on_db.columns[1].name == "c_number"
+    assert query_on_db.columns[2].name == "c_text"
+    assert query_on_db.columns[3].name == "c_boolean"
+    assert query_on_db.columns[4].name == "c_datetime"
+    assert query_on_db.columns[5].name == "c_timestamp"
+
+    # check data
+    query_on_db.result = cast(DataFrame, query_on_db.result)
+    assert query_on_db.result.c_integer.to_list() == [1]
+    assert query_on_db.result.c_number.to_list() == [3.14]
+    assert query_on_db.result.c_text.to_list() == ["text"]
+    assert query_on_db.result.c_boolean.to_list() == [1]
+    assert query_on_db.result.c_datetime.to_list() == ["2021-01-01"]
+    assert query_on_db.result.c_timestamp.to_list() == [1609462861]
+
+    # check dtype
+    assert query_on_db.columns[0].dtype == ColumnDataType.INTEGER
+    assert query_on_db.columns[1].dtype == ColumnDataType.NUMBER
+    assert query_on_db.columns[2].dtype == ColumnDataType.TEXT
+    assert query_on_db.columns[3].dtype == ColumnDataType.INTEGER
+    assert query_on_db.columns[4].dtype == ColumnDataType.TEXT
+    assert query_on_db.columns[5].dtype == ColumnDataType.INTEGER
 
     hamana_db.close()
     return
 
 def test_to_sqlite_missing_result() -> None:
     """Test to_sqlite method with missing result."""
+
     query = Query(query = "SELECT * FROM users")
     with pytest.raises(QueryResultNotAvailable):
         query.to_sqlite("users")
+
     return

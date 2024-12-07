@@ -1,7 +1,7 @@
 import logging
 from enum import Flag, auto
 
-from pandas import DataFrame
+import pandas as pd
 from pydantic import BaseModel
 
 from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable
@@ -83,7 +83,7 @@ class ColumnDataType(Flag):
         elif dtype == ColumnDataType.DATETIME:
             return "TEXT"
         elif dtype == ColumnDataType.TIMESTAMP:
-            return "NUMERIC"
+            return "INTEGER"
         else:
             return ""
 
@@ -151,7 +151,7 @@ class Query:
         If not provided, the query result columns matches the database output.
     """
 
-    result: DataFrame | None = None
+    result: pd.DataFrame | None = None
     """
         Result of the query execution. 
         The result is a DataFrame with the columns defined in the query.
@@ -171,10 +171,24 @@ class Query:
     def to_sqlite(self, table_name: str) -> None:
         """
             This function is used to insert the query result into a 
-            table hosted on the hamana internal database (HamanaDatabase). 
+            table hosted on the `hamana` internal database (HamanaDatabase).
+
+            The `hamana` db is a SQLite database, for this reason 
+            `bool`, `datetime` and `timestamp` data types are supported.
+            If some of the columns are defined with these data types, 
+            then the method performs an automatic conversion to a SQLite data type.
+
+            In particular, the conversions are:
+            - `bool` columns are mapped to `INTEGER` data type, with the values 
+            `True` and `False` converted to `1` and `0`.
+            - `datetime` columns are mapped to `TEXT` data type, with the values 
+            converted to a string in the format `YYYY-MM-DD`.
+            - `timestamp` columns are mapped to `NUMERIC` data type, with the values
+            converted to a float representing the Unix timestamp.
 
             Parameters:
                 table_name: name of the table to create into the database.
+                    By assumption, the table's name is converted to uppercase.
 
             Raises:
                 QueryResultNotAvailable: if no result is available.
@@ -185,21 +199,43 @@ class Query:
         if self.result is None:
             logger.error("no result to save")
             raise QueryResultNotAvailable("no result to save")
+        df_insert = self.result.copy()
+
+        # set dtype
+        columns_dtypes: dict | None = None
+        if self.columns is not None:
+            columns_dtypes = {}
+            for column in self.columns:
+                columns_dtypes[column.name] = ColumnDataType.to_sqlite(column.dtype)
+
+                # convert columns
+                match column.dtype:
+                    case ColumnDataType.BOOLEAN:
+                        df_insert[column.name] = df_insert[column.name].astype(int)
+                    case ColumnDataType.DATETIME:
+                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y-%m-%d")
+                    case ColumnDataType.TIMESTAMP:
+                        # convert to Unix timestamp, suggested by pandas documentation
+                        df_insert[column.name] = (df_insert[column.name] - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
 
         # import internal database
         from ...core.db import HamanaDatabase
 
         # get instance
         db = HamanaDatabase.get_instance()
+
+        # insert data
+        table_name_upper = table_name.upper()
         with db:
-            logger.debug(f"inserting data into table {table_name}")
-            self.result.to_sql(
-                name = table_name,
+            logger.debug(f"inserting data into table {table_name_upper}")
+            df_insert.to_sql(
+                name = table_name_upper,
                 con = db.connection,
                 if_exists = "replace",
+                dtype = columns_dtypes,
                 index = False
             )
-            logger.info(f"data inserted into table {table_name}")
+            logger.info(f"data inserted into table {table_name_upper}")
 
         logger.debug("end")
         return
@@ -210,6 +246,7 @@ class Query:
 
             Parameters:
                 table_name: name of the table to insert the data.
+                    By assumption, the table's name is converted to uppercase.
 
             Returns:
                 query to insert the data into the table.
@@ -230,8 +267,9 @@ class Query:
         logger.debug("values string created")
 
         # build query
-        query = f"INSERT INTO {table_name.upper()} ({columns}) VALUES ({values})"
-        logger.info(f"query to insert data into table {table_name} created")
+        table_name_upper = table_name.upper()
+        query = f"INSERT INTO {table_name_upper} ({columns}) VALUES ({values})"
+        logger.info(f"query to insert data into table {table_name_upper} created")
         logger.info(f"query: {query}")
 
         logger.debug("end")
@@ -243,6 +281,7 @@ class Query:
 
             Parameters:
                 table_name: name of the table to be created.
+                    By assumption, the table's name is converted to uppercase.
 
             Returns:
                 query to create the table.
@@ -255,10 +294,11 @@ class Query:
             raise QueryColumnsNotAvailable("no columns available")
 
         # build query
-        query = "CREATE TABLE " + table_name.upper() + " (\n" + \
+        table_name_upper = table_name.upper()
+        query = "CREATE TABLE " + table_name_upper + " (\n" + \
                 "".rjust(4) + ", ".rjust(4).join([f"{column.name} {ColumnDataType.to_sqlite(column.dtype)}\n" for column in self.columns]) + \
                 ")"
-        logger.info(f"query to create table {table_name} created")
+        logger.info(f"query to create table {table_name_upper} created")
         logger.info(f"query: {query}")
 
         logger.debug("end")
