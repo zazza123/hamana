@@ -8,7 +8,7 @@ from oracledb.exceptions import OperationalError
 from .base import BaseConnector
 from .config import DatabaseConnectorConfig
 from .exceptions import DatabaseConnetionError
-from .query import Query, QueryColumn
+from .query import Query
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -146,35 +146,10 @@ class OracleConnector(BaseConnector):
             raise e
 
     def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
-        logger.debug("start")
-
-        # execute query
         try:
-            with self as conn:
-                logger.info(f"extracting data (using: {self.config.user}) ...")
-                with conn.connection.cursor() as cursor:
-
-                    # execute query
-                    cursor.execute(query.query, parameters = query.get_params()) # type: ignore
-                    logger.info(f"query: {query.query}")
-                    logger.info(f"parameters: {query.get_params()}")
-
-                    # set columns
-                    if query.columns is None:
-                        logger.info("set query columns")
-                        query.columns = [QueryColumn(order = i, name = desc[0]) for i, desc in enumerate(cursor.description)]
-
-                    # fetch in batches
-                    while True:
-                        results = cursor.fetchmany(batch_size)
-                        if not results:
-                            break
-                        yield results
+            return super().batch_execute(query, batch_size)
         except OperationalError as e:
             logger.exception(e)
-            raise DatabaseConnetionError(f"unable to establish connection with database")
+            raise DatabaseConnetionError("unable to establish connection with database.")
         except Exception as e:
             raise e
-
-        logger.debug("end")
-        return

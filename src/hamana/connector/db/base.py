@@ -1,6 +1,6 @@
 import logging
 from types import TracebackType
-from typing import Type, overload
+from typing import Type, overload, Generator, Any
 
 from pandas import DataFrame, to_datetime
 
@@ -124,6 +124,72 @@ class BaseConnector(DatabaseConnectorABC):
 
         logger.debug("end")
         return query if flag_query_str else None
+
+    def batch_execute(self, query: Query, batch_size: int) -> Generator[list[tuple], None, None]:
+        logger.debug("start")
+
+        # execute query
+        try:
+            with self as conn:
+                logger.info(f"extracting data ...")
+
+                logger.debug("open cursor")
+                cursor = conn.connection.cursor()
+                logger.debug("cursor opened")
+
+                # execute query
+                params = query.get_params()
+                if params is not None:
+                    cursor.execute(query.query, params)
+                else:
+                    cursor.execute(query.query)
+                logger.info(f"query: {query.query}")
+                logger.info(f"parameters: {query.get_params()}")
+
+                # fetch in batches
+                while True:
+                    results = cursor.fetchmany(batch_size)
+
+                    if not results:
+                        break
+
+                    # set columns
+                    if query.columns is None:
+                        """
+                            Observe that this operatin is executed only once 
+                            and only if the query object was not defined with columns.
+                        """
+                        logger.info("set query columns")
+                        columns = [desc[0] for desc in cursor.description]
+
+                        # create temporary DataFrame
+                        df_temp = DataFrame(results, columns = columns)
+
+                        # get columns
+                        logger.debug("update query columns ...")
+                        query_columns = []
+                        for i, column in enumerate(columns):
+                            query_columns.append(
+                                QueryColumn(
+                                    order = i,
+                                    name = column,
+                                    dtype = ColumnDataType.from_pandas(df_temp[column].dtype.name)
+                                )
+                            )
+
+                        query.columns = query_columns
+                        logger.info("query column updated")
+
+                    yield results
+
+                cursor.close()
+                logger.debug("cursor closed")
+        except Exception as e:
+            logger.exception(e)
+            raise e
+
+        logger.debug("end")
+        return
 
     def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
         logger.debug("start")
