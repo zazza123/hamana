@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Any, Generator, Protocol, TYPE_CHECKING
 from abc import ABCMeta, abstractmethod
 
+from .config import SQLiteDataImportMode
+
 if TYPE_CHECKING:
     from .query import Query
 
@@ -95,7 +97,7 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
+    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to extract data from the database and insert it 
             into the `hamana` internal database (HamanaDatabase).
@@ -118,6 +120,7 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
                 table_name: name of the table to insert the data.
                     By assumption, the table's name is converted to uppercase.
                 batch_size: size of the batch used during the inserting process.
+                mode: mode of importing the data into the database.
         """
         raise NotImplementedError
 

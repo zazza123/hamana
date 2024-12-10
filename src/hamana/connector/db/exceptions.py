@@ -11,3 +11,6 @@ class QueryColumnsNotAvailable(HamanaException):
 
 class ColumnDataTypeConversionError(HamanaException):
     pass
+
+class TableAlreadyExists(HamanaException):
+    pass

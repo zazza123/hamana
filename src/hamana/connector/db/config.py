@@ -1,4 +1,21 @@
+from enum import Enum
 from pydantic import BaseModel
+
+class SQLiteDataImportMode(str, Enum):
+    """
+        Enum to represent the mode of importing data to an 
+        SQLite database via `to_sqlite` method.
+    """
+
+    REPLACE = "replace"
+    """Replace the data in the table."""
+
+    APPEND = "append"
+    """Append the data to the table."""
+
+    FAIL = "fail"
+    """Fail if the table already exists."""
+
 
 class DatabaseConnectorConfig(BaseModel):
     """

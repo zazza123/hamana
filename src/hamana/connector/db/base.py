@@ -4,9 +4,10 @@ from typing import Type, overload, Generator, Any
 
 from pandas import DataFrame, to_datetime
 
-from .query import Query, QueryColumn, ColumnDataType
+from .config import SQLiteDataImportMode
 from .interface import DatabaseConnectorABC
-from .exceptions import QueryColumnsNotAvailable, ColumnDataTypeConversionError
+from .query import Query, QueryColumn, ColumnDataType
+from .exceptions import QueryColumnsNotAvailable, ColumnDataTypeConversionError, TableAlreadyExists
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -191,7 +192,7 @@ class BaseConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000) -> None:
+    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         logger.debug("start")
 
         table_name_upper = table_name.upper()
@@ -206,6 +207,27 @@ class BaseConnector(DatabaseConnectorABC):
         hamana_connection = hamana_db.get_connection()
         logger.debug("internal database instance obtained")
 
+        # check table existance
+        query_check_table = Query(
+            query = """SELECT COUNT(1) AS flag_exists FROM sqlite_master WHERE type = 'table' AND name = :table_name""",
+            params = {"table_name": table_name_upper},
+            columns = [
+                QueryColumn(order = 0, name = "flag_exists", dtype = ColumnDataType.BOOLEAN)
+            ]
+        )
+        hamana_db.execute(query_check_table)
+        logger.debug("table check query executed")
+
+        flag_table_exists = False
+        if query_check_table.result is not None:
+            flag_table_exists = query_check_table.result["flag_exists"].values[0]
+        logger.info(f"table exists: {flag_table_exists}")
+
+        # block insert if mode is fail and table exists
+        if flag_table_exists and mode == SQLiteDataImportMode.FAIL:
+            logger.error(f"table {table_name_upper} already exists")
+            raise TableAlreadyExists(table_name_upper)
+
         # execute extraction
         logger.info(f"extracting data, batch size: {batch_size}")
         hamana_cursor = hamana_connection.cursor()
@@ -215,10 +237,12 @@ class BaseConnector(DatabaseConnectorABC):
                 logger.info("generating insert query")
                 insert_query = query.get_insert_query(table_name_upper)
 
-                logger.info(f"creating table {table_name_upper}")
-                hamana_cursor.execute(query.get_create_query(table_name_upper))
-                hamana_connection.commit()
-                logger.debug("table created")
+                # create table if not exists
+                if not flag_table_exists or mode == SQLiteDataImportMode.REPLACE:
+                    logger.info(f"creating table {table_name_upper}")
+                    hamana_cursor.execute(query.get_create_query(table_name_upper))
+                    hamana_connection.commit()
+                    logger.debug("table created")
 
             hamana_cursor.executemany(insert_query, row_batch)
             hamana_connection.commit()

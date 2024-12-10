@@ -4,6 +4,7 @@ from enum import Flag, auto
 import pandas as pd
 from pydantic import BaseModel
 
+from .config import SQLiteDataImportMode
 from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable
 
 # set logging
@@ -168,7 +169,7 @@ class Query:
             _params = self.params
         return _params
 
-    def to_sqlite(self, table_name: str) -> None:
+    def to_sqlite(self, table_name: str, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to insert the query result into a 
             table hosted on the `hamana` internal database (HamanaDatabase).
@@ -189,6 +190,7 @@ class Query:
             Parameters:
                 table_name: name of the table to create into the database.
                     By assumption, the table's name is converted to uppercase.
+                mode: mode of importing the data into the database.
 
             Raises:
                 QueryResultNotAvailable: if no result is available.
@@ -231,7 +233,7 @@ class Query:
             df_insert.to_sql(
                 name = table_name_upper,
                 con = db.connection,
-                if_exists = "replace",
+                if_exists = mode.value,
                 dtype = columns_dtypes,
                 index = False
             )
