@@ -4,7 +4,7 @@ from typing import Type, overload, Generator, Any
 
 from pandas import DataFrame, to_datetime
 
-from .config import SQLiteDataImportMode
+from .schema import SQLiteDataImportMode
 from .interface import DatabaseConnectorABC
 from .query import Query, QueryColumn, ColumnDataType
 from .exceptions import QueryColumnsNotAvailable, ColumnDataTypeConversionError, TableAlreadyExists

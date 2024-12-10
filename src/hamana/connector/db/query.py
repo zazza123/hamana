@@ -4,7 +4,7 @@ from enum import Flag, auto
 import pandas as pd
 from pydantic import BaseModel
 
-from .config import SQLiteDataImportMode
+from .schema import SQLiteDataImportMode
 from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable
 
 # set logging

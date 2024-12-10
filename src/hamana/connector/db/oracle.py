@@ -6,7 +6,7 @@ from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
 
 from .base import BaseConnector
-from .config import DatabaseConnectorConfig
+from .schema import DatabaseConnectorConfig
 from .exceptions import DatabaseConnetionError
 from .query import Query
 

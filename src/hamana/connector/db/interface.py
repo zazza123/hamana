@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Generator, Protocol, TYPE_CHECKING
 from abc import ABCMeta, abstractmethod
 
-from .config import SQLiteDataImportMode
+from .schema import SQLiteDataImportMode
 
 if TYPE_CHECKING:
     from .query import Query
