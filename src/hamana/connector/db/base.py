@@ -237,8 +237,16 @@ class BaseConnector(DatabaseConnectorABC):
                 logger.info("generating insert query")
                 insert_query = query.get_insert_query(table_name_upper)
 
-                # create table if not exists
+                # create table
                 if not flag_table_exists or mode == SQLiteDataImportMode.REPLACE:
+
+                    # drop if exists (for replace)
+                    if flag_table_exists:
+                        logger.info(f"drop table {table_name_upper}")
+                        hamana_cursor.execute(f"DROP TABLE {table_name_upper}")
+                        hamana_connection.commit()
+                        logger.debug("table dropped")
+
                     logger.info(f"creating table {table_name_upper}")
                     hamana_cursor.execute(query.get_create_query(table_name_upper))
                     hamana_connection.commit()

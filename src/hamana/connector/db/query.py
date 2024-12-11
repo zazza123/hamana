@@ -228,16 +228,22 @@ class Query:
 
         # insert data
         table_name_upper = table_name.upper()
-        with db:
-            logger.debug(f"inserting data into table {table_name_upper}")
-            df_insert.to_sql(
-                name = table_name_upper,
-                con = db.connection,
-                if_exists = mode.value,
-                dtype = columns_dtypes,
-                index = False
-            )
-            logger.info(f"data inserted into table {table_name_upper}")
+        try:
+            with db:
+                logger.debug(f"inserting data into table {table_name_upper}")
+                logger.debug(f"mode: {mode.value}")
+                df_insert.to_sql(
+                    name = table_name_upper,
+                    con = db.connection,
+                    if_exists = mode.value,
+                    dtype = columns_dtypes,
+                    index = False
+                )
+                logger.info(f"data inserted into table {table_name_upper}")
+        except Exception as e:
+            logger.error(f"error inserting data into table {table_name_upper}")
+            logger.exception(e)
+            raise e
 
         logger.debug("end")
         return
