@@ -312,5 +312,23 @@ class Query:
         logger.debug("end")
         return query
 
+    def get_column_names(self) -> list[str]:
+        """
+            This function returns the column names of the query.
+
+            Returns:
+                list of column names.
+        """
+        logger.debug("start")
+
+        # check columns availablity
+        if self.columns is None:
+            logger.error("no columns available")
+            raise QueryColumnsNotAvailable("no columns available")
+        columns = [column.name for column in self.columns]
+
+        logger.debug("end")
+        return columns
+
     def __str__(self) -> str:
         return self.query

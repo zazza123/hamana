@@ -192,11 +192,18 @@ class BaseConnector(DatabaseConnectorABC):
         logger.debug("end")
         return
 
-    def to_sqlite(self, query: Query, table_name: str, batch_size: int = 1000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
+    def to_sqlite(
+        self,
+        query: Query,
+        table_name: str,
+        raw_insert: bool = False,
+        batch_size: int = 1000,
+        mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE
+    ) -> None:
         logger.debug("start")
 
         table_name_upper = table_name.upper()
-        insert_query: str | None = None
+        insert_query: str
 
         # import internal database
         from ...core.db import HamanaDatabase
@@ -230,10 +237,11 @@ class BaseConnector(DatabaseConnectorABC):
 
         # execute extraction
         logger.info(f"extracting data, batch size: {batch_size}")
+        flag_first_batch = True
         hamana_cursor = hamana_connection.cursor()
         for row_batch in self.batch_execute(query, batch_size):
 
-            if insert_query is None:
+            if flag_first_batch:
                 logger.info("generating insert query")
                 insert_query = query.get_insert_query(table_name_upper)
 
@@ -251,6 +259,15 @@ class BaseConnector(DatabaseConnectorABC):
                     hamana_cursor.execute(query.get_create_query(table_name_upper))
                     hamana_connection.commit()
                     logger.debug("table created")
+
+                # set flag
+                flag_first_batch = False
+
+            # adjust data types
+            if raw_insert == False:
+                df_temp = DataFrame(row_batch, columns = query.get_column_names())
+                df_temp = self._adjust_query_result_df(df_temp, query.columns) # type: ignore
+                row_batch = df_temp.to_records(index = False)
 
             hamana_cursor.executemany(insert_query, row_batch)
             hamana_connection.commit()
