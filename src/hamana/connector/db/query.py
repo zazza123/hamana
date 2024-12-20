@@ -55,7 +55,7 @@ class ColumnDataType(Flag):
             return ColumnDataType.TEXT
         elif dtype == "bool":
             return ColumnDataType.BOOLEAN
-        elif dtype == "datetime64":
+        elif dtype == "datetime64[ns]":
             return ColumnDataType.DATETIME
         elif dtype == "datetime64[ns, UTC]":
             return ColumnDataType.TIMESTAMP
