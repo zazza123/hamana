@@ -185,15 +185,15 @@ def test_execute_query_missing_column() -> None:
 
 """
     Test `to_sqlite` method.
-    Table used: `T_TO_SQLITE`
+    Table used: `T_DB_SQLITE_*`
 
     Test cases:
         1. table not exists + column no meta
         2. table exists + fail
         3. table exists + replace
         4. table exists + append
-        5. table no column meta
-        6. table column meta
+        5. table column meta + raw insert OFF
+        6. table row insert ON
 """
 
 def test_to_sqlite_table_not_exists_column_no_meta() -> None:
@@ -202,7 +202,7 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
         does not exist and the column metadata is 
         not provided.
 
-        The method creates the table `T_TO_SQLITE`
+        The method creates the table `T_DB_SQLITE_TO_SQLITE`
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
@@ -212,10 +212,10 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     query_input = Query("SELECT * FROM T_DTYPES")
 
     # save to SQLite
-    hamana_db.to_sqlite(query_input, "T_TO_SQLITE")
+    hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE")
 
     # check result
-    query = hamana_db.execute("SELECT * FROM T_TO_SQLITE")
+    query = hamana_db.execute("SELECT * FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -243,7 +243,7 @@ def test_to_sqlite_table_exists_fail() -> None:
         Test the `to_sqlite` method when the table 
         already exists and the `fail` mode is selected.
 
-        The method tries to create the table `T_TO_SQLITE`
+        The method tries to create the table `T_DB_SQLITE_TO_SQLITE`
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
@@ -254,7 +254,7 @@ def test_to_sqlite_table_exists_fail() -> None:
 
     # save to SQLite
     with pytest.raises(TableAlreadyExists):
-        hamana_db.to_sqlite(query_input, "T_TO_SQLITE", mode = SQLiteDataImportMode.FAIL)
+        hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.FAIL)
 
     hamana_db.close()
     return
@@ -264,7 +264,7 @@ def test_to_sqlite_table_exists_replace() -> None:
         Test the `to_sqlite` method when the table 
         already exists and the `replace` mode is selected.
 
-        The method tries to create the table `T_TO_SQLITE`
+        The method tries to create the table `T_DB_SQLITE_TO_SQLITE`
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
@@ -274,10 +274,10 @@ def test_to_sqlite_table_exists_replace() -> None:
     query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 1")
 
     # save to SQLite
-    hamana_db.to_sqlite(query_input, "T_TO_SQLITE", mode = SQLiteDataImportMode.REPLACE)
+    hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.REPLACE)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_TO_SQLITE")
+    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -295,7 +295,7 @@ def test_to_sqlite_table_exists_append() -> None:
         Test the `to_sqlite` method when the table 
         already exists and the `append` mode is selected.
 
-        The method adds a row to the table `T_TO_SQLITE`
+        The method adds a row to the table `T_DB_SQLITE_TO_SQLITE`
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
@@ -305,10 +305,10 @@ def test_to_sqlite_table_exists_append() -> None:
     query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 2")
 
     # save to SQLite
-    hamana_db.to_sqlite(query_input, "T_TO_SQLITE", mode = SQLiteDataImportMode.APPEND)
+    hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.APPEND)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_TO_SQLITE")
+    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -317,6 +317,103 @@ def test_to_sqlite_table_exists_append() -> None:
     # check data
     assert isinstance(query.result, pd.DataFrame)
     assert query.result.row_count.to_list() == [2]
+
+    hamana_db.close()
+    return
+
+def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
+    """
+        Test the `to_sqlite` method, extracting data 
+        from a query with column metadata (datatypes) 
+        and raw insert mode off, in this way the data 
+        are converted before the insertion.
+
+        The method creates the table `T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON`
+        from a SELECT * from `T_DTYPES` table.
+    """
+    # init database
+    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+
+    # create query
+    query_input = Query(
+        query = "SELECT * FROM T_DTYPES WHERE c_integer = 3",
+        columns = [
+            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
+            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
+            QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
+            QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
+            QueryColumn(order = 4, name = "c_datetime", dtype = ColumnDataType.DATETIME),
+            QueryColumn(order = 5, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
+        ]
+    )
+
+    # save to SQLite
+    hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
+
+    # check result
+    query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
+    hamana_db.execute(query)
+    assert query.columns is not None
+
+    # check columns
+    assert query.columns[0].name == "c_integer"
+    assert query.columns[1].name == "c_number"
+    assert query.columns[2].name == "c_text"
+    assert query.columns[3].name == "c_boolean"
+    assert query.columns[4].name == "c_datetime"
+    assert query.columns[5].name == "c_timestamp"
+
+    # check data
+    assert isinstance(query.result, pd.DataFrame)
+    assert query.result.c_integer.to_list() == [3]
+    assert query.result.c_number.to_list() == [-1.3]
+    assert query.result.c_text.to_list() == ["string_3"]
+    assert query.result.c_boolean.to_list() == [1]
+    assert query.result.c_datetime.to_list() == ["2021-01-03"]
+    assert query.result.c_timestamp.to_list() == [1609628400]
+
+    hamana_db.close()
+    return
+
+def test_to_sqlite_table_raw_insert_on() -> None:
+    """
+        Test the `to_sqlite` method by extracting data 
+        from a query and inserting them into the database directly
+        without data type conversion (raw insert mode ON).
+
+        The method creates the table `T_DB_SQLITE_TO_SQLITE_RAW_ON`
+        from a SELECT * from `T_DTYPES` table.
+    """
+    # init database
+    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+
+    # create query
+    query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 3")
+
+    # save to SQLite
+    hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_ON", raw_insert = True)
+
+    # check result
+    query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_ON")
+    hamana_db.execute(query)
+    assert query.columns is not None
+
+    # check columns
+    assert query.columns[0].name == "c_integer"
+    assert query.columns[1].name == "c_number"
+    assert query.columns[2].name == "c_text"
+    assert query.columns[3].name == "c_boolean"
+    assert query.columns[4].name == "c_datetime"
+    assert query.columns[5].name == "c_timestamp"
+
+    # check data
+    assert isinstance(query.result, pd.DataFrame)
+    assert query.result.c_integer.to_list() == [3]
+    assert query.result.c_number.to_list() == [-1.3]
+    assert query.result.c_text.to_list() == ["string_3"]
+    assert query.result.c_boolean.to_list() == [1]
+    assert query.result.c_datetime.to_list() == ["2021-01-03"]
+    assert query.result.c_timestamp.to_list() == [1609628400]
 
     hamana_db.close()
     return

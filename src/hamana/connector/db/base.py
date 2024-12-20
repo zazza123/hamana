@@ -203,7 +203,8 @@ class BaseConnector(DatabaseConnectorABC):
         logger.debug("start")
 
         table_name_upper = table_name.upper()
-        insert_query: str
+        insert_query: str = ""
+        column_names: list[str] = []
 
         # import internal database
         from ...core.db import HamanaDatabase
@@ -239,11 +240,12 @@ class BaseConnector(DatabaseConnectorABC):
         logger.info(f"extracting data, batch size: {batch_size}")
         flag_first_batch = True
         hamana_cursor = hamana_connection.cursor()
-        for row_batch in self.batch_execute(query, batch_size):
+        for raw_batch in self.batch_execute(query, batch_size):
 
             if flag_first_batch:
                 logger.info("generating insert query")
                 insert_query = query.get_insert_query(table_name_upper)
+                column_names = query.get_column_names()
 
                 # create table
                 if not flag_table_exists or mode == SQLiteDataImportMode.REPLACE:
@@ -264,13 +266,21 @@ class BaseConnector(DatabaseConnectorABC):
                 flag_first_batch = False
 
             # adjust data types
-            if raw_insert == False:
-                df_temp = DataFrame(row_batch, columns = query.get_column_names())
-                df_temp = self._adjust_query_result_df(df_temp, query.columns) # type: ignore
-                row_batch = df_temp.to_records(index = False)
+            if raw_insert:
+                # no data type conversion
+                hamana_cursor.executemany(insert_query, raw_batch)
+                hamana_connection.commit()
+            else:
+                # create temporary query
+                query_temp = Query(query = query.query, columns = query.columns)
 
-            hamana_cursor.executemany(insert_query, row_batch)
-            hamana_connection.commit()
+                # assign result (adjust data types)
+                df_temp = DataFrame(raw_batch, columns = column_names)
+                df_temp = self._adjust_query_result_df(df_temp, query_temp.columns) # type: ignore
+                query_temp.result = df_temp
+
+                # insert into table
+                query_temp.to_sqlite(table_name_upper, SQLiteDataImportMode.APPEND)
 
         logger.info(f"data inserted into table {table_name_upper}")
         hamana_cursor.close()
