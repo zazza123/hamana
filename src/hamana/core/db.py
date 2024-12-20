@@ -119,5 +119,8 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
         else:
             self._connection.close()
             self._connection = None
+
+            # remove instance from singleton
+            HamanaDatabase._instances.pop(HamanaDatabase)
         logger.debug("end")
         return
