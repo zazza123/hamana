@@ -44,6 +44,7 @@ def test_get_create_query_success() -> None:
         ")"
     )
     assert query.get_create_query("users") == expected_query
+    return
 
 def test_get_create_query_no_columns() -> None:
     """Test get_create_query method with no columns."""
@@ -51,6 +52,7 @@ def test_get_create_query_no_columns() -> None:
     query = Query(query = "SELECT * FROM users")
     with pytest.raises(QueryColumnsNotAvailable):
         query.get_create_query("users")
+    return
 
 def test_to_sqlite_success() -> None:
     """
@@ -68,7 +70,7 @@ def test_to_sqlite_success() -> None:
             QueryColumn(order = 3, name = "c_text", dtype = ColumnDataType.TEXT),
             QueryColumn(order = 4, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
             QueryColumn(order = 5, name = "c_datetime", dtype = ColumnDataType.DATETIME),
-            QueryColumn(order = 6, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
+            QueryColumn(order = 6, name = "c_timestamp", dtype = ColumnDataType.DATETIME)
         ]
     )
 
@@ -106,16 +108,16 @@ def test_to_sqlite_success() -> None:
     assert query_on_db.result.c_number.to_list() == [3.14]
     assert query_on_db.result.c_text.to_list() == ["text"]
     assert query_on_db.result.c_boolean.to_list() == [1]
-    assert query_on_db.result.c_datetime.to_list() == ["2021-01-01"]
-    assert query_on_db.result.c_timestamp.to_list() == [1609462861]
+    assert query_on_db.result.c_datetime.to_list() == [20210101.0]
+    assert query_on_db.result.c_timestamp.to_list() == [20210101.010101]
 
     # check dtype
     assert query_on_db.columns[0].dtype == ColumnDataType.INTEGER
     assert query_on_db.columns[1].dtype == ColumnDataType.NUMBER
     assert query_on_db.columns[2].dtype == ColumnDataType.TEXT
     assert query_on_db.columns[3].dtype == ColumnDataType.INTEGER
-    assert query_on_db.columns[4].dtype == ColumnDataType.TEXT
-    assert query_on_db.columns[5].dtype == ColumnDataType.INTEGER
+    assert query_on_db.columns[4].dtype == ColumnDataType.NUMBER
+    assert query_on_db.columns[5].dtype == ColumnDataType.NUMBER
 
     hamana_db.close()
     return

@@ -5,7 +5,7 @@ import pandas as pd
 
 from hamana.core.db import HamanaDatabase
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
-from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType
+from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType, QueryColumnParser
 from hamana.connector.db.schema import SQLiteDataImportMode
 from hamana.connector.db.sqlite import SQLiteConnector
 
@@ -58,16 +58,16 @@ def test_execute_query_without_meta() -> None:
     assert df.c_number.to_list() == [0.01]
     assert df.c_text.to_list() == ["string_1"]
     assert df.c_boolean.to_list() == [1]
-    assert df.c_datetime.to_list() == ["2021-01-01"]
-    assert df.c_timestamp.to_list() == [1609455600]
+    assert df.c_datetime.to_list() == [20210101.0]
+    assert df.c_timestamp.to_list() == [20210101.010101]
 
     # check dtype
     assert query.columns[0].dtype == ColumnDataType.INTEGER
     assert query.columns[1].dtype == ColumnDataType.NUMBER
     assert query.columns[2].dtype == ColumnDataType.TEXT
     assert query.columns[3].dtype == ColumnDataType.INTEGER
-    assert query.columns[4].dtype == ColumnDataType.TEXT
-    assert query.columns[5].dtype == ColumnDataType.INTEGER
+    assert query.columns[4].dtype == ColumnDataType.NUMBER
+    assert query.columns[5].dtype == ColumnDataType.NUMBER
 
 
 def test_execute_query_with_meta() -> None:
@@ -92,8 +92,22 @@ def test_execute_query_with_meta() -> None:
             QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
             QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
             QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
-            QueryColumn(order = 4, name = "c_datetime", dtype = ColumnDataType.DATETIME),
-            QueryColumn(order = 5, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
+            QueryColumn(
+                order = 4,
+                name = "c_datetime",
+                dtype = ColumnDataType.DATETIME,
+                parser = QueryColumnParser(
+                    to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
+                )
+            ),
+            QueryColumn(
+                order = 5,
+                name = "c_timestamp",
+                dtype = ColumnDataType.DATETIME,
+                parser = QueryColumnParser(
+                    to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
+                )
+            )
         ],
         params = [QueryParam(name = "row_id", value = 1)]
     )
@@ -128,7 +142,7 @@ def test_execute_query_with_meta() -> None:
     assert df.c_text.to_list() == ["string_1"]
     assert df.c_boolean.to_list() == [True]
     assert df.c_datetime.to_list() == [datetime(2021, 1, 1)]
-    assert df.c_timestamp.to_list() == [pd.Timestamp("2020-12-31 23:00:00")]
+    assert df.c_timestamp.to_list() == [pd.Timestamp("2021-01-01 01:01:01")]
 
 def test_execute_query_re_order_column() -> None:
     """
@@ -232,8 +246,8 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     assert query.result.c_number.to_list() == [0.01, 10.2, -1.3]
     assert query.result.c_text.to_list() == ["string_1", "string_2", "string_3"]
     assert query.result.c_boolean.to_list() == [1, 0, 1]
-    assert query.result.c_datetime.to_list() == ["2021-01-01", "2021-01-02", "2021-01-03"]
-    assert query.result.c_timestamp.to_list() == [1609455600, 1609542000, 1609628400]
+    assert query.result.c_datetime.to_list() == [20210101.0, 20210102.0, 20210103.0]
+    assert query.result.c_timestamp.to_list() == [20210101.010101, 20210102.010101, 20210103.010101]
 
     hamana_db.close()
     return
@@ -342,8 +356,22 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
             QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
             QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
             QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
-            QueryColumn(order = 4, name = "c_datetime", dtype = ColumnDataType.DATETIME),
-            QueryColumn(order = 5, name = "c_timestamp", dtype = ColumnDataType.TIMESTAMP)
+            QueryColumn(
+                order = 4,
+                name = "c_datetime",
+                dtype = ColumnDataType.DATETIME,
+                parser = QueryColumnParser(
+                    to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
+                )
+            ),
+            QueryColumn(
+                order = 5,
+                name = "c_timestamp",
+                dtype = ColumnDataType.DATETIME,
+                parser = QueryColumnParser(
+                    to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
+                )
+            )
         ]
     )
 
@@ -369,8 +397,8 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     assert query.result.c_number.to_list() == [-1.3]
     assert query.result.c_text.to_list() == ["string_3"]
     assert query.result.c_boolean.to_list() == [1]
-    assert query.result.c_datetime.to_list() == ["2021-01-03"]
-    assert query.result.c_timestamp.to_list() == [1609628400]
+    assert query.result.c_datetime.to_list() == [20210103.0]
+    assert query.result.c_timestamp.to_list() == [20210103.010101]
 
     hamana_db.close()
     return
@@ -412,8 +440,8 @@ def test_to_sqlite_table_raw_insert_on() -> None:
     assert query.result.c_number.to_list() == [-1.3]
     assert query.result.c_text.to_list() == ["string_3"]
     assert query.result.c_boolean.to_list() == [1]
-    assert query.result.c_datetime.to_list() == ["2021-01-03"]
-    assert query.result.c_timestamp.to_list() == [1609628400]
+    assert query.result.c_datetime.to_list() == [20210103.0]
+    assert query.result.c_timestamp.to_list() == [20210103.010101]
 
     hamana_db.close()
     return

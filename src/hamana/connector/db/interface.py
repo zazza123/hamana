@@ -111,10 +111,10 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             In particular, the conversions are:
             - `bool` columns are mapped to `INTEGER` data type, with the values 
             `True` and `False` converted to `1` and `0`.
-            - `datetime` columns are mapped to `TEXT` data type, with the values 
-            converted to a string in the format `YYYY-MM-DD`.
-            - `timestamp` columns are mapped to `NUMERIC` data type, with the values
-            converted to a float representing the Unix timestamp.
+            - `datetime` columns are mapped to `REAL` data type, with the values 
+            converted to a float number using the following format: `YYYYMMDD.HHmmss`.
+                Observes that the integer part represents the date in the format YYYYMMDD,
+                while the decimal part represents the time component in the format HHmmss.
 
             By default, the method performs the automatic datatype 
             conversion. However, use the parameter `raw_insert` to 

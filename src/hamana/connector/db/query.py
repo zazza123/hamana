@@ -1,5 +1,6 @@
 import logging
 from enum import Flag, auto
+from collections.abc import Callable
 
 import pandas as pd
 from pydantic import BaseModel
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # param value custom type
 ParamValue = int | float | str | bool
+QueryColumnParserType = Callable[[pd.Series], pd.Series]
 
 class ColumnDataType(Flag):
     """
@@ -31,10 +33,7 @@ class ColumnDataType(Flag):
     """Boolean data type."""
 
     DATETIME = auto()
-    """Date data type."""
-
-    TIMESTAMP = auto()
-    """Timestamp data type."""
+    """Datetime data type."""
 
     @classmethod
     def from_pandas(cls, dtype: str) -> "ColumnDataType":
@@ -55,11 +54,10 @@ class ColumnDataType(Flag):
             return ColumnDataType.TEXT
         elif dtype == "bool":
             return ColumnDataType.BOOLEAN
-        elif dtype == "datetime64[ns]":
+        elif "datetime" in dtype:
             return ColumnDataType.DATETIME
-        elif dtype == "datetime64[ns, UTC]":
-            return ColumnDataType.TIMESTAMP
         else:
+            logger.warning(f"unknown data type: {dtype}")
             return ColumnDataType.TEXT
 
     @classmethod
@@ -82,17 +80,90 @@ class ColumnDataType(Flag):
         elif dtype == ColumnDataType.BOOLEAN:
             return "INTEGER"
         elif dtype == ColumnDataType.DATETIME:
-            return "TEXT"
-        elif dtype == ColumnDataType.TIMESTAMP:
-            return "INTEGER"
+            return "REAL"
         else:
             return ""
 
-class QueryColumn(BaseModel):
+class QueryColumnParser:
+    """
+        Class representing a parser used to convert a column to a specific data type.
+        A parser is used during a query execution; each column can have a specific parser.
+
+        It is composed by a function for every `ColumnDataType` type. 
+        Observe that each function must have a single parameter, which is a pandas Series, 
+        and must return a pandas Series. If no function is provided for a specific data type, 
+        then a default function is used.
+
+        Parameters:
+            to_int: function to convert a column of `ColumnDataType.INTEGER` type.
+                Default function converts the column to `int64` using the `astype` method.
+            to_number: function to convert a column of `ColumnDataType.NUMBER` type.
+                Default function converts the column to `float64` using the `astype` method.
+            to_text: function to convert a column of `ColumnDataType.TEXT` type.
+                Default function converts the column to `object` using the `astype` method.
+            to_boolean: function to convert a column of `ColumnDataType.BOOLEAN` type.
+                Default function converts the column to `bool` using the `astype` method.
+            to_datetime: function to convert a column of `ColumnDataType.DATETIME` type.
+                Default function converts the column to `datetime` using the `pd.to_datetime` method.
+    """
+
+    def __init__(
+        self, 
+        to_int: QueryColumnParserType | None = None,
+        to_number: QueryColumnParserType | None = None,
+        to_text: QueryColumnParserType | None = None,
+        to_boolean: QueryColumnParserType | None = None,
+        to_datetime: QueryColumnParserType | None = None
+    ) -> None:
+
+        # set default parsers
+        self.to_int = to_int if to_int else lambda series: series.astype("int64")
+        self.to_number = to_number if to_number else lambda series: series.astype("float64")
+        self.to_text = to_text if to_text else lambda series: series.astype("object")
+        self.to_boolean = to_boolean if to_boolean else lambda series: series.astype("bool")
+        self.to_datetime = to_datetime if to_datetime else lambda series: pd.to_datetime(series)
+
+    def parse(self, series: pd.Series, dtype: ColumnDataType) -> pd.Series:
+        """
+            Function to parse a column to a specific data type.
+
+            Parameters:
+                series: pandas Series to be parsed.
+                dtype: data type to parse the column.
+
+            Returns:
+                pandas Series parsed to the specific data type.
+        """
+        match dtype:
+            case ColumnDataType.INTEGER:
+                series = self.to_int(series)
+            case ColumnDataType.NUMBER:
+                series = self.to_number(series)
+            case ColumnDataType.TEXT:
+                series = self.to_text(series)
+            case ColumnDataType.BOOLEAN:
+                series = self.to_boolean(series)
+            case ColumnDataType.DATETIME:
+                series = self.to_datetime(series)
+        return series
+
+class QueryColumn:
     """
         Class to represent a column returned by a query. 
         A column is represented by its order, source and name.
     """
+
+    def __init__(
+        self,
+        order: int,
+        name: str,
+        dtype: ColumnDataType = ColumnDataType.TEXT,
+        parser: QueryColumnParser = QueryColumnParser()
+    ) -> None:
+        self.order = order
+        self.name = name
+        self.dtype = dtype
+        self.parser = parser
 
     order: int
     """Order of the column in the query result."""
@@ -100,10 +171,16 @@ class QueryColumn(BaseModel):
     name: str
     """Name of the column provided by the database result."""
 
-    dtype: ColumnDataType = ColumnDataType.TEXT
+    dtype: ColumnDataType
     """
         Data type of the column.  
         The data type is used to map the column to the application data.
+    """
+
+    parser: QueryColumnParser
+    """
+        Parser used to convert the column to a specific data type.
+        The parser is used during the query execution.
     """
 
 class QueryParam(BaseModel):
@@ -182,10 +259,10 @@ class Query:
             In particular, the conversions are:
             - `bool` columns are mapped to `INTEGER` data type, with the values 
             `True` and `False` converted to `1` and `0`.
-            - `datetime` columns are mapped to `TEXT` data type, with the values 
-            converted to a string in the format `YYYY-MM-DD`.
-            - `timestamp` columns are mapped to `NUMERIC` data type, with the values
-            converted to a float representing the Unix timestamp.
+            - `datetime` columns are mapped to `REAL` data type, with the values 
+            converted to a float number using the following format: `YYYYMMDD.HHmmss`.
+                Observes that the integer part represents the date in the format YYYYMMDD,
+                while the decimal part represents the time component in the format HHmmss.
 
             Parameters:
                 table_name: name of the table to create into the database.
@@ -215,10 +292,7 @@ class Query:
                     case ColumnDataType.BOOLEAN:
                         df_insert[column.name] = df_insert[column.name].astype(int)
                     case ColumnDataType.DATETIME:
-                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y-%m-%d")
-                    case ColumnDataType.TIMESTAMP:
-                        # convert to Unix timestamp, suggested by pandas documentation
-                        df_insert[column.name] = (df_insert[column.name] - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
+                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d.%H%M%S").astype(float)
 
         # import internal database
         from ...core.db import HamanaDatabase

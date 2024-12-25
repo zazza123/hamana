@@ -1,8 +1,8 @@
 import logging
 from types import TracebackType
-from typing import Type, overload, Generator, Any
+from typing import Type, overload, Generator
 
-from pandas import DataFrame, to_datetime
+from pandas import DataFrame
 
 from .schema import SQLiteDataImportMode
 from .interface import DatabaseConnectorABC
@@ -44,7 +44,7 @@ class BaseConnector(DatabaseConnectorABC):
 
         try:
             with self:
-                logger.info(f"pinging database ...")
+                logger.info("pinging database ...")
         except Exception as e:
             logger.exception(e)
             raise e
@@ -69,7 +69,7 @@ class BaseConnector(DatabaseConnectorABC):
         # execute query
         try:
             with self as conn:
-                logger.info(f"extracting data ...")
+                logger.info("extracting data ...")
 
                 logger.debug("open cursor")
                 cursor = conn.connection.cursor()
@@ -132,7 +132,7 @@ class BaseConnector(DatabaseConnectorABC):
         # execute query
         try:
             with self as conn:
-                logger.info(f"extracting data ...")
+                logger.info("extracting data ...")
 
                 logger.debug("open cursor")
                 cursor = conn.connection.cursor()
@@ -340,21 +340,7 @@ class BaseConnector(DatabaseConnectorABC):
                     logger.info(f"different datatype for {column.name}")
                     logger.info(f"datatype (query): {dtype_query}")
                     logger.info(f"datatype (df): {dtype_df}")
-
-                    match dtype_query:
-                        case ColumnDataType.INTEGER:
-                            df_result[column.name] = df_result[column.name].astype("int64")
-                        case ColumnDataType.NUMBER:
-                            df_result[column.name] = df_result[column.name].astype("float64")
-                        case ColumnDataType.TEXT:
-                            df_result[column.name] = df_result[column.name].astype("object")
-                        case ColumnDataType.BOOLEAN:
-                            df_result[column.name] = df_result[column.name].astype("bool")
-                        case ColumnDataType.DATETIME:
-                            df_result[column.name] = to_datetime(df_result[column.name])
-                        case ColumnDataType.TIMESTAMP:
-                            df_result[column.name] = to_datetime(df_result[column.name], unit = "s", origin = "unix")
-
+                    df_result[column.name] = column.parser.parse(df_result[column.name], dtype_query)
                 except Exception as e:
                     logger.error("ERROR: on datatype change")
                     logger.error(e)
