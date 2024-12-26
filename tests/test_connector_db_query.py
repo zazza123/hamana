@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from hamana.core.db import HamanaDatabase
+from hamana import HamanaDatabase
 from hamana.connector.db.query import Query, QueryColumn, ColumnDataType
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable
 

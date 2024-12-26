@@ -3,11 +3,11 @@ from datetime import datetime
 
 import pandas as pd
 
-from hamana.core.db import HamanaDatabase
-from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
-from hamana.connector.db.query import Query, QueryColumn, QueryParam, ColumnDataType, QueryColumnParser
+from hamana import HamanaDatabase
+from hamana.connector.db import SQLiteConnector, Query, QueryColumn, QueryParam, QueryColumnParser
+from hamana.connector.db.query import ColumnDataType
 from hamana.connector.db.schema import SQLiteDataImportMode
-from hamana.connector.db.sqlite import SQLiteConnector
+from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
