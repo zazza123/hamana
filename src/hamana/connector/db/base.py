@@ -68,11 +68,11 @@ class BaseConnector(DatabaseConnectorABC):
 
         # execute query
         try:
-            with self as conn:
+            with self:
                 logger.info("extracting data ...")
 
                 logger.debug("open cursor")
-                cursor = conn.connection.cursor()
+                cursor = self.connection.cursor()
                 logger.debug("cursor opened")
 
                 # execute query
