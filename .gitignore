@@ -3,5 +3,5 @@ hamana.code-workspace
 /gitignore
 /**/__pycache__
 /**/.DS_Store
-/tests/test.ini
 /.vscode
+/tests/data/db/test.db
