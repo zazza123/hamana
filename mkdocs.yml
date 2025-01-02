@@ -1,0 +1,98 @@
+site_name: hamana
+
+repo_url: https://github.com/zazza123/hamana
+repo_name: zazza123/hamana
+
+theme:
+  name: material
+  #favicon: config/images/favicon.png
+  custom_dir: docs/config/overrides
+  language: en
+  icon:
+    logo: material/cat
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - content.code.copy
+  palette:
+    # Light Mode Palette
+    - media: "(prefers-color-scheme: light)"
+      primary: lime
+      scheme: default
+      toggle:
+        icon: octicons/moon-24
+        name: Switch to Dark Mode
+    # Dark Mode Palette
+    - media: "(prefers-color-scheme: dark)"
+      primary: brown
+      scheme: slate
+      toggle:
+        icon: octicons/sun-24
+        name: Switch to Light Mode
+
+plugins:
+  - search
+  - offline
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src, tests]
+          options:
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            show_inheritance_diagram: true
+            show_root_heading: true
+            merge_init_into_class: true
+            annotations_path: source
+            separate_signature: true
+            show_signature_annotations: true
+            members_order: source
+
+markdown_extensions:
+
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+  # Python Markdown Extensions
+  - pymdownx.snippets
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.mark
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Navigation
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Connetors:
+    - Database:
+      - connector/db/index.md
+      - Oracle: connector/db/oracle.md
+      - SQLite: connector/db/sqlite.md
+
+extra_css:
+  - config/css/mkdocstrings.css
