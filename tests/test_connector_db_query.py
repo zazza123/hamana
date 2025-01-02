@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from hamana import HamanaDatabase
+import hamana as hm
 from hamana.connector.db.query import Query, QueryColumn, ColumnDataType
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable
 
@@ -85,13 +85,13 @@ def test_to_sqlite_success() -> None:
     })
 
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # insert
     query.to_sqlite("T_QUERY_TO_SQLITE")
 
     # check (no columns metadata)
-    query_on_db = hamana_db.execute("SELECT * FROM T_QUERY_TO_SQLITE")
+    query_on_db = hm.execute("SELECT * FROM T_QUERY_TO_SQLITE")
 
     # check columns
     query_on_db.columns = cast(list[QueryColumn], query_on_db.columns)
@@ -119,7 +119,7 @@ def test_to_sqlite_success() -> None:
     assert query_on_db.columns[4].dtype == ColumnDataType.NUMBER
     assert query_on_db.columns[5].dtype == ColumnDataType.NUMBER
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_missing_result() -> None:

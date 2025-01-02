@@ -6,8 +6,8 @@ from pytest_mock import MockerFixture
 
 import pandas as pd
 
-from hamana import HamanaDatabase
-from hamana.connector.db import OracleConnector, Query, QueryColumn, QueryColumnParser
+import hamana as hm
+from hamana.connector.db import OracleConnector, Query, QueryColumn
 from hamana.connector.db.query import ColumnDataType, SQLiteDataImportMode
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 
@@ -253,7 +253,7 @@ def test_to_sqlite_table_not_exists_column_no_meta(mocker: MockerFixture, mock_o
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -266,7 +266,7 @@ def test_to_sqlite_table_not_exists_column_no_meta(mocker: MockerFixture, mock_o
     db.to_sqlite(query_input, "T_DB_ORACLE_TO_SQLITE")
 
     # check result
-    query = hamana_db.execute("SELECT * FROM T_DB_ORACLE_TO_SQLITE")
+    query = hm.execute("SELECT * FROM T_DB_ORACLE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -286,7 +286,7 @@ def test_to_sqlite_table_not_exists_column_no_meta(mocker: MockerFixture, mock_o
     assert query.result.c_datetime.to_list() == [20210101.0, 20210102.0, 20210103.0]
     assert query.result.c_timestamp.to_list() == [20210101.010101, 20210102.010101, 20210103.010101]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_fail(mocker: MockerFixture, mock_oracle_connection: MockerFixture) -> None:
@@ -298,7 +298,7 @@ def test_to_sqlite_table_exists_fail(mocker: MockerFixture, mock_oracle_connecti
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -311,7 +311,7 @@ def test_to_sqlite_table_exists_fail(mocker: MockerFixture, mock_oracle_connecti
         mocker.patch("hamana.connector.db.oracle.OracleConnector._connect", return_value = mock_oracle_connection)
         db.to_sqlite(query_input, "T_DB_ORACLE_TO_SQLITE", mode = SQLiteDataImportMode.FAIL)
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_replace(mocker: MockerFixture, mock_oracle_connection: MockerFixture) -> None:
@@ -323,7 +323,7 @@ def test_to_sqlite_table_exists_replace(mocker: MockerFixture, mock_oracle_conne
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -336,7 +336,7 @@ def test_to_sqlite_table_exists_replace(mocker: MockerFixture, mock_oracle_conne
     db.to_sqlite(query_input, "T_DB_ORACLE_TO_SQLITE", mode = SQLiteDataImportMode.REPLACE)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_ORACLE_TO_SQLITE")
+    query = hm.execute("SELECT COUNT(1) AS row_count FROM T_DB_ORACLE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -346,7 +346,7 @@ def test_to_sqlite_table_exists_replace(mocker: MockerFixture, mock_oracle_conne
     assert isinstance(query.result, pd.DataFrame)
     assert query.result.row_count.to_list() == [3]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_append(mocker: MockerFixture, mock_oracle_connection: MockerFixture) -> None:
@@ -358,7 +358,7 @@ def test_to_sqlite_table_exists_append(mocker: MockerFixture, mock_oracle_connec
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -371,7 +371,7 @@ def test_to_sqlite_table_exists_append(mocker: MockerFixture, mock_oracle_connec
     db.to_sqlite(query_input, "T_DB_ORACLE_TO_SQLITE", mode = SQLiteDataImportMode.APPEND)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_ORACLE_TO_SQLITE")
+    query = hm.execute("SELECT COUNT(1) AS row_count FROM T_DB_ORACLE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -381,7 +381,7 @@ def test_to_sqlite_table_exists_append(mocker: MockerFixture, mock_oracle_connec
     assert isinstance(query.result, pd.DataFrame)
     assert query.result.row_count.to_list() == [6]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_raw_insert_off_column_meta_on(mocker: MockerFixture, mock_oracle_connection: MockerFixture) -> None:
@@ -395,7 +395,7 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on(mocker: MockerFixture, mo
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -419,7 +419,7 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on(mocker: MockerFixture, mo
 
     # check result
     query = Query(query = "SELECT * FROM T_DB_ORACLE_TO_SQLITE_RAW_OFF_META_ON")
-    hamana_db.execute(query)
+    hm.execute(query)
     assert query.columns is not None
 
     # check columns
@@ -439,7 +439,7 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on(mocker: MockerFixture, mo
     assert query.result.c_datetime.to_list() == [20210101.0, 20210102.0, 20210103.0]
     assert query.result.c_timestamp.to_list() == [20210101.010101, 20210102.010101, 20210103.010101]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_raw_insert_on(mocker: MockerFixture, mock_oracle_connection: MockerFixture) -> None:
@@ -452,7 +452,7 @@ def test_to_sqlite_table_raw_insert_on(mocker: MockerFixture, mock_oracle_connec
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # "connect" to oracle db
     db = OracleConnector.new(user = "test", password = "test", host = "localhost")
@@ -466,7 +466,7 @@ def test_to_sqlite_table_raw_insert_on(mocker: MockerFixture, mock_oracle_connec
 
     # check result
     query = Query(query = "SELECT * FROM T_DB_ORACLE_TO_SQLITE_RAW_ON")
-    hamana_db.execute(query)
+    hm.execute(query)
     assert query.columns is not None
 
     # check columns
@@ -486,5 +486,5 @@ def test_to_sqlite_table_raw_insert_on(mocker: MockerFixture, mock_oracle_connec
     assert query.result.c_datetime.to_list() == ["2021-01-01 00:00:00", "2021-01-02 00:00:00", "2021-01-03 00:00:00"]
     assert query.result.c_timestamp.to_list() == ["2021-01-01 01:01:01", "2021-01-02 01:01:01", "2021-01-03 01:01:01"]
 
-    hamana_db.close()
+    hm.disconnect()
     return

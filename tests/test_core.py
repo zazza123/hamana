@@ -2,8 +2,8 @@ import pytest
 import logging
 from sqlite3 import Connection
 
-from hamana import HamanaDatabase
 from hamana.core.db import (
+    HamanaDatabase,
     HamanaDatabaseNotInitialised,
     HamanaDatabaseAlreadyInitialised
 )

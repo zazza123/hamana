@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from hamana import HamanaDatabase
+import hamana as hm
 from hamana.connector.db import SQLiteConnector, Query, QueryColumn, QueryParam, QueryColumnParser
 from hamana.connector.db.query import ColumnDataType
 from hamana.connector.db.schema import SQLiteDataImportMode
@@ -220,16 +220,17 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query("SELECT * FROM T_DTYPES")
 
     # save to SQLite
+    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE")
 
     # check result
-    query = hamana_db.execute("SELECT * FROM T_DB_SQLITE_TO_SQLITE")
+    query = hm.execute("SELECT * FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -249,7 +250,7 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     assert query.result.c_datetime.to_list() == [20210101.0, 20210102.0, 20210103.0]
     assert query.result.c_timestamp.to_list() == [20210101.010101, 20210102.010101, 20210103.010101]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_fail() -> None:
@@ -261,16 +262,17 @@ def test_to_sqlite_table_exists_fail() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query("SELECT * FROM T_DTYPES")
 
     # save to SQLite
     with pytest.raises(TableAlreadyExists):
+        hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
         hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.FAIL)
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_replace() -> None:
@@ -282,16 +284,17 @@ def test_to_sqlite_table_exists_replace() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 1")
 
     # save to SQLite
+    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.REPLACE)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
+    query = hm.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -301,7 +304,7 @@ def test_to_sqlite_table_exists_replace() -> None:
     assert isinstance(query.result, pd.DataFrame)
     assert query.result.row_count.to_list() == [1]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_exists_append() -> None:
@@ -313,16 +316,17 @@ def test_to_sqlite_table_exists_append() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 2")
 
     # save to SQLite
+    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.APPEND)
 
     # check result
-    query = hamana_db.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
+    query = hm.execute("SELECT COUNT(1) AS row_count FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
     # check columns
@@ -332,7 +336,7 @@ def test_to_sqlite_table_exists_append() -> None:
     assert isinstance(query.result, pd.DataFrame)
     assert query.result.row_count.to_list() == [2]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
@@ -346,7 +350,7 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query(
@@ -376,11 +380,12 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     )
 
     # save to SQLite
+    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
 
     # check result
     query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
-    hamana_db.execute(query)
+    hm.execute(query)
     assert query.columns is not None
 
     # check columns
@@ -400,7 +405,7 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     assert query.result.c_datetime.to_list() == [20210103.0]
     assert query.result.c_timestamp.to_list() == [20210103.010101]
 
-    hamana_db.close()
+    hm.disconnect()
     return
 
 def test_to_sqlite_table_raw_insert_on() -> None:
@@ -413,17 +418,18 @@ def test_to_sqlite_table_raw_insert_on() -> None:
         from a SELECT * from `T_DTYPES` table.
     """
     # init database
-    hamana_db = HamanaDatabase(DB_SQLITE_TEST_PATH)
+    hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
     query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 3")
 
     # save to SQLite
+    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_ON", raw_insert = True)
 
     # check result
     query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_ON")
-    hamana_db.execute(query)
+    hm.execute(query)
     assert query.columns is not None
 
     # check columns
@@ -443,5 +449,5 @@ def test_to_sqlite_table_raw_insert_on() -> None:
     assert query.result.c_datetime.to_list() == [20210103.0]
     assert query.result.c_timestamp.to_list() == [20210103.010101]
 
-    hamana_db.close()
+    hm.disconnect()
     return

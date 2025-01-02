@@ -1,5 +1,8 @@
-from .db import HamanaDatabase
+from .db import HamanaDatabase, connect, disconnect, execute
 
 __all__ = [
-    "HamanaDatabase"
+    "HamanaDatabase",
+    "connect",
+    "disconnect",
+    "execute"
 ]

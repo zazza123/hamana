@@ -1,10 +1,11 @@
 import logging
-from typing import Any, Type
+from typing import Any, Type, overload
 from types import TracebackType
 from abc import ABCMeta
 from pathlib import Path
-from sqlite3 import Connection, connect
+from sqlite3 import Connection, connect as sqlite_connect
 
+from ..connector.db.query import Query
 from ..connector.db.sqlite import SQLiteConnector
 from .exceptions import HamanaDatabaseAlreadyInitialised, HamanaDatabaseNotInitialised
 
@@ -62,7 +63,7 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
     def __init__(self, path: str | Path = ":memory:") -> None:
         path_str = str(path)
         super().__init__(path_str)
-        self._connection = connect(database = path_str)
+        self._connection = sqlite_connect(database = path_str)
 
     def _connect(self) -> Connection:
         if self._connection is None:
@@ -124,3 +125,67 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
             HamanaDatabase._instances.pop(HamanaDatabase)
         logger.debug("end")
         return
+
+def connect(path: str | Path = ":memory:") -> None:
+    """
+        Connect to the database using the path provided.  
+        This function is a helper function to connect to the database 
+        without creating an instance of the HamanaDatabase class.
+
+        Parameters:
+            path: path like string that define the SQLite database to load/create.  
+                By default the database is created in memory.
+    """
+    logger.debug("start")
+
+    # create connection
+    HamanaDatabase(path)
+    logger.info(f"Connected to the database ({path}).")
+
+    logger.debug("end")
+    return
+
+def disconnect() -> None:
+    """
+        Disconnect from the database.  
+        This function is a helper function to disconnect from the database 
+        without using an instance of the HamanaDatabase class.
+    """
+    logger.debug("start")
+
+    # close connection
+    HamanaDatabase.get_instance().close()
+    logger.info("Disconnected from the database.")
+
+    logger.debug("end")
+    return
+
+@overload
+def execute(query: str) -> Query: ...
+
+@overload
+def execute(query: Query) -> None: ...
+
+def execute(query: Query | str) -> None | Query:
+    """
+        Execute the query on the internal database.  
+        This function is a helper function to execute a query on the `hamana` SQLite database.
+
+        Parameters:
+            query: query to execute on the database.
+
+        Return:
+            the result depend on the input provided.  
+            If query is a string, then the function automatically creates a Query object, 
+            execute the extraction and return the Query object with the result.  
+            If query is a Query object, then the function performs the extraction and return 
+            None because the result is stored in the object itself.
+    """
+    logger.debug("start")
+
+    # execute query
+    result = HamanaDatabase.get_instance().execute(query)
+    logger.info(f"Query executed successfully: {query}")
+
+    logger.debug("end")
+    return result
