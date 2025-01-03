@@ -4,4 +4,4 @@ hamana.code-workspace
 /**/__pycache__
 /**/.DS_Store
 /.vscode
-/tests/data/db/*
+/tests/data
