@@ -3,6 +3,8 @@ import logging
 import warnings
 from pathlib import Path
 
+from ...connector.db.query import QueryColumn, ColumnDataType
+from .exceptions import CSVColumnNumberMismatchError
 from .warning import DialectMismatchWarning
 
 # set logger
@@ -11,11 +13,12 @@ logger = logging.getLogger(__name__)
 class CSV:
     """
         Class representing the connector to a CSV file.  
+
         Observe that when the object is initialized, the class is not going
         to read the CSV file; the class only performs checks on the file 
         and extract metadata.
 
-        To process the CSV file, use the methods `read()` or `to_sqlite()`.
+        To process the CSV file, use the methods `execute()` or `to_sqlite()`.
 
         Parameters:
             file_path: Path to the CSV file.
@@ -30,6 +33,12 @@ class CSV:
             has_header: Flag to indicate if the CSV file has a header.  
                 If `None`, the class will try to infer if the file has a header; observe 
                 that this method could lead to false positives.
+            columns: List of columns in the CSV file.
+                By default, the class will try to infer the columns directly from 
+                the file. If the header is not available, then by default, the 
+                names of the columns will be `column_1`, `column_2`, and so on. 
+                Moreover, the data type of the columns will be set by default to 
+                `ColumnDataType.TEXT`.
     """
 
     # variables
@@ -45,11 +54,15 @@ class CSV:
     has_header: bool
     """Flag to indicate if the CSV file has a header."""
 
+    columns: list[QueryColumn]
+    """List of columns in the CSV file."""
+
     def __init__(
         self,
         file_path: str | Path,
         dialect: type[csv.Dialect] | None = None,
-        has_header: bool | None = None
+        has_header: bool | None = None,
+        columns: list[QueryColumn] | None = None
     ) -> None:
         logger.debug("start")
 
@@ -82,6 +95,18 @@ class CSV:
             has_header = self._check_has_header()
         self.has_header = has_header
         logger.debug(f"has_header: {self.has_header}")
+
+        # set columns
+        infer_columns = self._infer_columns()
+        if columns is None:
+            logger.info("columns are not provided, trying to infer..")
+            self.columns = infer_columns
+        else:
+            # compare columns with inferred columns
+            if len(columns) != len(infer_columns):
+                error_msg = f"Number of columns mismatch: provided ({len(columns)}) != inferred ({len(infer_columns)})"
+                raise CSVColumnNumberMismatchError(error_msg)
+            self.columns = columns
 
         logger.debug("end")
         return
@@ -154,3 +179,40 @@ class CSV:
 
         logger.debug("end")
         return has_header
+
+    def _infer_columns(self) -> list[QueryColumn]:
+        """
+            Infer the columns of the CSV file.
+
+            This method reads the first row of the CSV file and 
+            infers the columns. Observe that if the header is not 
+            available, then by default, the names of the columns 
+            will be `column_1`, `column_2`, and so on.
+
+            By default, all the infered columns will have the 
+            data type `ColumnDataType.TEXT`.
+
+            Returns:
+                List of columns in the CSV file.
+        """
+        logger.debug("start")
+
+        columns = []
+
+        # read first row
+        with open(self.file_path, "r", newline = "") as file:
+            reader = csv.reader(file, dialect = self.dialect)
+            header = next(reader)
+
+        # set columns
+        for i, column in enumerate(header):
+            columns.append(
+                QueryColumn(
+                    order = i,
+                    name = column if self.has_header else f"column_{i + 1}",
+                    dtype = ColumnDataType.TEXT
+                )
+            )
+
+        logger.debug("end")
+        return columns
