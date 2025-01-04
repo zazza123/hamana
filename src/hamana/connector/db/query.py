@@ -183,6 +183,11 @@ class QueryColumn:
         The parser is used during the query execution.
     """
 
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, QueryColumn):
+            return (self.order, self.name, self.dtype) == (value.order, value.name, value.dtype)
+        return False
+
 class QueryParam(BaseModel):
     """
         Class to represent a parameter used in a query.  
