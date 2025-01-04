@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import BaseModel
 
 from .schema import SQLiteDataImportMode
-from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable
+from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable, ColumnDataTypeConversionError
 
 # set logging
 logger = logging.getLogger(__name__)
@@ -408,6 +408,72 @@ class Query:
 
         logger.debug("end")
         return columns
+
+    def adjust_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            This function is used to adjust a DataFrame (usually 
+            the result of a query) based on the columns provided.
+
+            The function re-orders the columns of the DataFrame 
+            and check the data types; if they do not match, then 
+            the function will try to convert the requested one.
+
+            Parameters:
+                df: DataFrame to adjust
+        """
+        logger.debug("start")
+
+        # check columns availablity
+        if self.columns is None:
+            logger.error("no columns available")
+            raise QueryColumnsNotAvailable("no columns available")
+        columns = self.columns
+
+        # get columns
+        columns_query = []
+        columns_df = df.columns.to_list()
+
+        logger.info("get query columns ordered")
+        for col in sorted(columns, key = lambda col : col.order):
+            columns_query.append(col.name)
+
+        # check columns_query is a subset of columns_df
+        if not set(columns_query).issubset(columns_df):
+            logger.error("columns do not match between query and resuls")
+            raise QueryColumnsNotAvailable(f"columns do not match {set(columns_query).difference(columns_df)}")
+
+        # re-order
+        if columns_query != columns_df:
+            logger.info("re-ordering columns")
+            logger.info(f"order > {columns_query}")
+            df = df[columns_query]
+        else:
+            logger.info("columns already in the correct order")
+
+        # check data types
+        logger.info("check data types")
+        dtypes_df = df.dtypes
+        for column in columns:
+
+            dtype_query = column.dtype
+            dtype_df = ColumnDataType.from_pandas(dtypes_df[column.name].name)
+            logger.debug(f"column: {column.name}")
+            logger.debug(f"datatype (query): {dtype_query}")
+            logger.debug(f"datatype (df): {dtype_df}")
+
+            if dtype_query != dtype_df:
+                try:
+                    logger.info(f"different datatype for {column.name}")
+                    logger.info(f"datatype (query): {dtype_query}")
+                    logger.info(f"datatype (df): {dtype_df}")
+                    df[column.name] = column.parser.parse(df[column.name], dtype_query)
+                except Exception as e:
+                    logger.error("ERROR: on datatype change")
+                    logger.error(e)
+                    raise ColumnDataTypeConversionError(f"ERROR: on datatype change for {column.name}")
+
+        logger.debug("end")
+        return df
 
     def __str__(self) -> str:
         return self.query

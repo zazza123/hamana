@@ -7,7 +7,7 @@ from pandas import DataFrame
 from .schema import SQLiteDataImportMode
 from .interface import DatabaseConnectorABC
 from .query import Query, QueryColumn, ColumnDataType
-from .exceptions import QueryColumnsNotAvailable, ColumnDataTypeConversionError, TableAlreadyExists
+from .exceptions import TableAlreadyExists
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class BaseConnector(DatabaseConnectorABC):
 
         # adjust columns
         if query.columns:
-            df_result = self._adjust_query_result_df(df_result, query.columns)
+            df_result = query.adjust_df(df_result)
         else:
             logger.debug("update query columns ...")
             df_dtype = df_result.dtypes
@@ -276,7 +276,7 @@ class BaseConnector(DatabaseConnectorABC):
 
                 # assign result (adjust data types)
                 df_temp = DataFrame(raw_batch, columns = column_names)
-                df_temp = self._adjust_query_result_df(df_temp, query_temp.columns) # type: ignore
+                df_temp = query_temp.adjust_df(df_temp)
                 query_temp.result = df_temp
 
                 # insert into table
@@ -287,64 +287,3 @@ class BaseConnector(DatabaseConnectorABC):
 
         logger.debug("end")
         return
-
-    def _adjust_query_result_df(self, df_result: DataFrame, columns: list[QueryColumn]) -> DataFrame:
-        """
-            This function is used to adjust a DataFrame (usually 
-            the result of a query) based on the columns provided.
-
-            The function re-orders the columns of the DataFrame 
-            and check the data types; if they do not match, then 
-            the function will try to convert the requested one.
-
-            Parameters:
-                df_result: DataFrame to adjust.
-                columns: list of columns to use for the adjustment
-        """
-        logger.debug("start")
-
-        # get columns
-        columns_query = []
-        columns_df = df_result.columns.to_list()
-
-        logger.info("get query columns ordered")
-        for col in sorted(columns, key = lambda col : col.order):
-            columns_query.append(col.name)
-
-        # check columns_query is a subset of columns_df
-        if not set(columns_query).issubset(columns_df):
-            logger.error("columns do not match between query and resuls")
-            raise QueryColumnsNotAvailable(f"columns do not match {set(columns_query).difference(columns_df)}")
-
-        # re-order
-        if columns_query != columns_df:
-            logger.info("re-ordering columns")
-            logger.info(f"order > {columns_query}")
-            df_result = df_result[columns_query]
-        else:
-            logger.info("columns already in the correct order")
-
-        # check data types
-        logger.info("check data types")
-        dtypes_df = df_result.dtypes
-        for column in columns:
-
-            dtype_query = column.dtype
-            dtype_df = ColumnDataType.from_pandas(dtypes_df[column.name].name)
-            logger.debug(f"column: {column.name}")
-            logger.debug(f"datatype (query): {dtype_query}")
-            logger.debug(f"datatype (df): {dtype_df}")
-
-            if dtype_query != dtype_df:
-                try:
-                    logger.info(f"different datatype for {column.name}")
-                    logger.info(f"datatype (query): {dtype_query}")
-                    logger.info(f"datatype (df): {dtype_df}")
-                    df_result[column.name] = column.parser.parse(df_result[column.name], dtype_query)
-                except Exception as e:
-                    logger.error("ERROR: on datatype change")
-                    logger.error(e)
-                    raise ColumnDataTypeConversionError(f"ERROR: on datatype change for {column.name}")
-
-        logger.debug("end")
-        return df_result
