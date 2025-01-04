@@ -186,7 +186,7 @@ class QueryColumn:
     def __eq__(self, value: object) -> bool:
         if isinstance(value, QueryColumn):
             return (self.order, self.name, self.dtype) == (value.order, value.name, value.dtype)
-        return False
+        return NotImplemented
 
 class QueryParam(BaseModel):
     """
