@@ -39,8 +39,9 @@ class CSV:
                 By default, the class will try to infer the columns directly from 
                 the file. If the header is not available, then by default, the 
                 names of the columns will be `column_1`, `column_2`, and so on. 
-                Moreover, the data type of the columns will be set by default to 
-                `ColumnDataType.TEXT`.
+                Moreover, the data type of the columns will be infered automatically 
+                by taking a sample of 1000 rows from the file, converted into a 
+                DataFrame, and using the data types from the DataFrame.
     """
 
     # variables
@@ -239,6 +240,14 @@ class CSV:
 
         columns = []
 
+        # read first 1000 rows
+        df_check = pd.read_csv(
+            filepath_or_buffer = self.file_path,
+            dialect = self.dialect, # type: ignore
+            header = 0 if self.has_header else None,
+            nrows = 1_000
+        )
+
         # read first row
         with open(self.file_path, "r", newline = "") as file:
             reader = csv.reader(file, dialect = self.dialect)
@@ -250,7 +259,7 @@ class CSV:
                 QueryColumn(
                     order = i,
                     name = column if self.has_header else f"column_{i + 1}",
-                    dtype = ColumnDataType.TEXT
+                    dtype = ColumnDataType.from_pandas(df_check.iloc[:, i].dtype.name)
                 )
             )
 

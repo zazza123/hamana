@@ -66,10 +66,10 @@ def test_csv_columns_infer_with_header() -> None:
     """
     csv_file = CSV("tests/data/file/csv_has_header_true.csv")
     assert len(csv_file.columns) == 6
-    assert csv_file.columns[0] == QueryColumn(0, "c_integer", ColumnDataType.TEXT)
-    assert csv_file.columns[1] == QueryColumn(1, "c_number", ColumnDataType.TEXT)
+    assert csv_file.columns[0] == QueryColumn(0, "c_integer", ColumnDataType.INTEGER)
+    assert csv_file.columns[1] == QueryColumn(1, "c_number", ColumnDataType.NUMBER)
     assert csv_file.columns[2] == QueryColumn(2, "c_text", ColumnDataType.TEXT)
-    assert csv_file.columns[3] == QueryColumn(3, "c_boolean", ColumnDataType.TEXT)
+    assert csv_file.columns[3] == QueryColumn(3, "c_boolean", ColumnDataType.BOOLEAN)
     assert csv_file.columns[4] == QueryColumn(4, "c_datetime", ColumnDataType.TEXT)
     assert csv_file.columns[5] == QueryColumn(5, "c_timestamp", ColumnDataType.TEXT)
     return
@@ -80,10 +80,10 @@ def test_csv_columns_infer_without_header() -> None:
     """
     csv_file = CSV("tests/data/file/csv_has_header_false.csv")
     assert len(csv_file.columns) == 6
-    assert csv_file.columns[0] == QueryColumn(0, "column_1", ColumnDataType.TEXT)
-    assert csv_file.columns[1] == QueryColumn(1, "column_2", ColumnDataType.TEXT)
+    assert csv_file.columns[0] == QueryColumn(0, "column_1", ColumnDataType.INTEGER)
+    assert csv_file.columns[1] == QueryColumn(1, "column_2", ColumnDataType.NUMBER)
     assert csv_file.columns[2] == QueryColumn(2, "column_3", ColumnDataType.TEXT)
-    assert csv_file.columns[3] == QueryColumn(3, "column_4", ColumnDataType.TEXT)
+    assert csv_file.columns[3] == QueryColumn(3, "column_4", ColumnDataType.BOOLEAN)
     assert csv_file.columns[4] == QueryColumn(4, "column_5", ColumnDataType.TEXT)
     assert csv_file.columns[5] == QueryColumn(5, "column_6", ColumnDataType.TEXT)
     return
