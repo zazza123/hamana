@@ -88,7 +88,7 @@ def test_csv_columns_infer_without_header() -> None:
     assert csv_file.columns[5] == QueryColumn(5, "column_6", ColumnDataType.TEXT)
     return
 
-def test_csv_columns_provided_mismatch() -> None:
+def test_csv_columns_provided_number_mismatch() -> None:
     """
         Test case for the CSV connector when the provided `columns` do not match 
         the actual columns in the file.

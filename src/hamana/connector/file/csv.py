@@ -22,6 +22,16 @@ class CSV:
 
         To process the CSV file, use the methods `execute()` or `to_sqlite()`.
 
+        **Example:**
+        ```python
+            from hamana.connector.file import CSV
+
+            csv_file = CSV('path/to/file.csv')
+            query = csv_file.execute()
+
+            print(query.result.head())
+        ```
+
         Parameters:
             file_path: Path to the CSV file.
             dialect: Dialect of the CSV file; the dialect is a class that defines 
@@ -33,13 +43,14 @@ class CSV:
                 If `None`, the class will try to infer the dialect of the CSV 
                 file by using the `csv.Sniffer.sniff()` method.
             has_header: Flag to indicate if the CSV file has a header.  
-                If `None`, the class will try to infer if the file has a header; observe 
+                If `None`, the class will try to infer it; observe 
                 that this method could lead to false positives.
-            columns: List of columns in the CSV file.
+            columns: List of columns in the CSV file. 
+                If columns are provided, ensure to list **all** the columns. 
                 By default, the class will try to infer the columns directly from 
                 the file. If the header is not available, then by default, the 
                 names of the columns will be `column_1`, `column_2`, and so on. 
-                Moreover, the data type of the columns will be infered automatically 
+                The data type of the columns will be infered automatically 
                 by taking a sample of 1000 rows from the file, converted into a 
                 DataFrame, and using the data types from the DataFrame.
     """
@@ -106,9 +117,7 @@ class CSV:
             self.columns = infer_columns
         else:
             # compare columns with inferred columns
-            if len(columns) != len(infer_columns):
-                error_msg = f"Number of columns mismatch: provided ({len(columns)}) != inferred ({len(infer_columns)})"
-                raise CSVColumnNumberMismatchError(error_msg)
+            self._compare_columns(columns, infer_columns)
             self.columns = columns
 
         logger.debug("end")
@@ -265,3 +274,28 @@ class CSV:
 
         logger.debug("end")
         return columns
+
+    def _compare_columns(self, reference_columns: list[QueryColumn], target_columns: list[QueryColumn]) -> None:
+        """
+            Compare two lists of columns.  
+            This method compares two lists of columns and raises 
+            an exception if the total number of columns do not match. 
+            Add inside this method additional creteria to compare 
+            the columns.
+
+            Parameters:
+                reference_columns: Reference columns.
+                target_columns: Target columns.
+
+            Raises:
+                CSVColumnNumberMismatchError: If the number of columns 
+                    in the reference and target lists do not match.
+        """
+        logger.debug("start")
+
+        if len(reference_columns) != len(target_columns):
+            error_msg = f"Number of columns mismatch: provided ({len(reference_columns)}) != inferred ({len(target_columns)})"
+            raise CSVColumnNumberMismatchError(error_msg)
+
+        logger.debug("end")
+        return
