@@ -3,7 +3,9 @@ import logging
 import warnings
 from pathlib import Path
 
-from ...connector.db.query import QueryColumn, ColumnDataType
+import pandas as pd
+
+from ...connector.db.query import Query, QueryColumn, ColumnDataType
 from .exceptions import CSVColumnNumberMismatchError
 from .warning import DialectMismatchWarning
 
@@ -110,6 +112,44 @@ class CSV:
 
         logger.debug("end")
         return
+
+    def execute(self) -> Query:
+        """
+            Function used to extract data from the CSV file.
+
+            Return:
+                the function automatically creates a `Query` object, 
+                executes the extraction and returns the `Query` object 
+                with the resulting rows.
+        """
+        logger.debug("start")
+
+        # set query
+        query = Query(
+            query = f"SELECT * FROM '{self.file_name}'",
+            columns = self.columns
+        )
+        logger.info(f"query created: {query.query}")
+
+        # read CSV file
+        logger.debug("reading CSV file")
+        df_result = pd.read_csv(
+            filepath_or_buffer = self.file_path,
+            dialect = self.dialect, # type: ignore
+            header = 0 if self.has_header else None,
+            names = [column.name for column in self.columns]
+        )
+        logger.info(f"data extracted, rows: {df_result.shape[0]}, columns: {df_result.shape[1]}")
+
+        # adjust columns
+        logger.debug("adjusting columns and data types")
+        df_result = query.adjust_df(df_result)
+
+        # set result
+        query.result = df_result
+
+        logger.debug("end")
+        return query
 
     def _infer_dialect(self) -> type[csv.Dialect]:
         """

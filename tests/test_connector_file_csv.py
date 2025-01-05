@@ -1,6 +1,8 @@
 import csv
 import pytest
 
+import pandas as pd
+
 from hamana.connector.file import CSV
 from hamana.connector.file.warning import DialectMismatchWarning
 from hamana.connector.file.exceptions import CSVColumnNumberMismatchError
@@ -93,4 +95,29 @@ def test_csv_columns_provided_mismatch() -> None:
     """
     with pytest.raises(CSVColumnNumberMismatchError):
         CSV("tests/data/file/csv_has_header_true.csv", columns = [QueryColumn(0, "c_integer", ColumnDataType.TEXT)])
+    return
+
+def test_execute_csv_with_header() -> None:
+    """
+        Test case for the CSV connector when the file has a header.
+    """
+    csv_file = CSV("tests/data/file/csv_has_header_true.csv").execute()
+
+    # check result
+    df = csv_file.result
+    assert isinstance(df, pd.DataFrame)
+    assert csv_file.columns is not None
+
+    # check columns
+    df_columns = df.columns.to_list()
+    assert csv_file.columns[0].name == df_columns[0]
+    assert csv_file.columns[1].name == df_columns[1]
+    assert csv_file.columns[2].name == df_columns[2]
+    assert csv_file.columns[3].name == df_columns[3]
+    assert csv_file.columns[4].name == df_columns[4]
+    assert csv_file.columns[5].name == df_columns[5]
+
+    # check data
+    assert df.shape == (10, 6)
+
     return
