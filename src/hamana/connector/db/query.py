@@ -116,11 +116,20 @@ class QueryColumnParser:
         to_datetime: QueryColumnParserType | None = None
     ) -> None:
 
+        self.boolean_mapper = {
+            "True": True, "False": False,
+            "true": True, "false": False,
+            "1": True, "0": False,
+            "Y": True, "N": False,
+            1: True, 0: False
+        }
+        """Mapper used to convert boolean values."""
+
         # set default parsers
         self.to_int = to_int if to_int else lambda series: series.astype("int64")
         self.to_number = to_number if to_number else lambda series: series.astype("float64")
         self.to_text = to_text if to_text else lambda series: series.astype("object")
-        self.to_boolean = to_boolean if to_boolean else lambda series: series.astype("bool")
+        self.to_boolean = to_boolean if to_boolean else lambda series: series.map(self.boolean_mapper)
         self.to_datetime = to_datetime if to_datetime else lambda series: pd.to_datetime(series)
 
     def parse(self, series: pd.Series, dtype: ColumnDataType) -> pd.Series:
@@ -463,9 +472,7 @@ class Query:
 
             if dtype_query != dtype_df:
                 try:
-                    logger.info(f"different datatype for {column.name}")
-                    logger.info(f"datatype (query): {dtype_query}")
-                    logger.info(f"datatype (df): {dtype_df}")
+                    logger.info(f"different datatype for '{column.name}' column -> (query) {dtype_query} != (df) {dtype_df}")
                     df[column.name] = column.parser.parse(df[column.name], dtype_query)
                 except Exception as e:
                     logger.error("ERROR: on datatype change")
