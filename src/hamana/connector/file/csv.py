@@ -2,10 +2,14 @@ import csv
 import logging
 import warnings
 from pathlib import Path
+from typing import Generator
+from datetime import datetime
 
 import pandas as pd
 
 from ...connector.db.query import Query, QueryColumn, ColumnDataType
+from ...connector.db.exceptions import TableAlreadyExists
+from ...connector.db.schema import SQLiteDataImportMode
 from .exceptions import CSVColumnNumberMismatchError
 from .warning import DialectMismatchWarning
 
@@ -119,6 +123,7 @@ class CSV:
             # compare columns with inferred columns
             self._compare_columns(columns, infer_columns)
             self.columns = columns
+        logger.debug(f"columns: {[column.name for column in self.columns]}")
 
         logger.debug("end")
         return
@@ -160,6 +165,142 @@ class CSV:
 
         logger.debug("end")
         return query
+
+    def batch_execute(self, batch_size: int) -> Generator[list[list | tuple], None, None]:
+        logger.debug("start")
+        logger.debug(f"batch size: {batch_size}")
+
+        # open file
+        dt_start = datetime.now()
+        logger.debug(f"open file {self.file_path}")
+        with open(self.file_path, "r", newline = "") as file:
+            reader = csv.reader(file, dialect = self.dialect)
+
+            # skip header
+            if self.has_header:
+                logger.debug("header skipped")
+                next(reader)
+
+            # read rows
+            batch = []
+            batch_count = 1
+            for row in reader:
+                batch.append(row)
+                if len(batch) == batch_size:
+                    if batch_count % 100 == 0:
+                        logger.info(f"batch {batch_count} read")
+                    yield batch
+
+                    # reset batch
+                    batch = []
+                    batch_count += 1
+
+            # yield remaining rows
+            if len(batch) > 0:
+                yield batch
+
+        dt_end = datetime.now()
+        logger.info(f"file read, elapsed time: {dt_end - dt_start}")
+        logger.debug("end")
+
+    def to_sqlite(
+        self,
+        table_name: str,
+        raw_insert: bool = False,
+        batch_size: int = 10_000,
+        mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE
+    ) -> None:
+        logger.debug("start")
+
+        table_name_upper = table_name.upper()
+        insert_query: str = ""
+        column_names: list[str] = []
+        query = Query(
+            query = f"SELECT * FROM '{self.file_name}'",
+            columns = self.columns
+        )
+
+        # import internal database
+        from ...core.db import HamanaDatabase
+        logger.debug("imported internal database")
+
+        # get instance
+        hamana_db = HamanaDatabase.get_instance()
+        hamana_connection = hamana_db.get_connection()
+        logger.debug("internal database instance obtained")
+
+        # check table existance
+        query_check_table = Query(
+            query = """SELECT COUNT(1) AS flag_exists FROM sqlite_master WHERE type = 'table' AND name = :table_name""",
+            params = {"table_name": table_name_upper},
+            columns = [
+                QueryColumn(order = 0, name = "flag_exists", dtype = ColumnDataType.BOOLEAN)
+            ]
+        )
+        hamana_db.execute(query_check_table)
+        logger.debug("table check query executed")
+
+        flag_table_exists = False
+        if query_check_table.result is not None:
+            flag_table_exists = query_check_table.result["flag_exists"].values[0]
+        logger.info(f"table exists: {flag_table_exists}")
+
+        # block insert if mode is fail and table exists
+        if flag_table_exists and mode == SQLiteDataImportMode.FAIL:
+            logger.error(f"table {table_name_upper} already exists")
+            raise TableAlreadyExists(table_name_upper)
+
+        # execute extraction
+        logger.info(f"extracting data, batch size: {batch_size}")
+        flag_first_batch = True
+        hamana_cursor = hamana_connection.cursor()
+        for raw_batch in self.batch_execute(batch_size):
+
+            if flag_first_batch:
+                logger.info("generating insert query")
+                insert_query = query.get_insert_query(table_name_upper)
+                column_names = query.get_column_names()
+
+                # create table
+                if not flag_table_exists or mode == SQLiteDataImportMode.REPLACE:
+
+                    # drop if exists (for replace)
+                    if flag_table_exists:
+                        logger.info(f"drop table {table_name_upper}")
+                        hamana_cursor.execute(f"DROP TABLE {table_name_upper}")
+                        hamana_connection.commit()
+                        logger.debug("table dropped")
+
+                    logger.info(f"creating table {table_name_upper}")
+                    hamana_cursor.execute(query.get_create_query(table_name_upper))
+                    hamana_connection.commit()
+                    logger.debug("table created")
+
+                # set flag
+                flag_first_batch = False
+
+            # adjust data types
+            if raw_insert:
+                # no data type conversion
+                hamana_cursor.executemany(insert_query, raw_batch)
+                hamana_connection.commit()
+            else:
+                # create temporary query
+                query_temp = Query(query = query.query, columns = query.columns)
+
+                # assign result (adjust data types)
+                df_temp = pd.DataFrame(raw_batch, columns = column_names)
+                df_temp = query_temp.adjust_df(df_temp)
+                query_temp.result = df_temp
+
+                # insert into table
+                query_temp.to_sqlite(table_name_upper, SQLiteDataImportMode.APPEND)
+
+        logger.info(f"data inserted into table {table_name_upper}")
+        hamana_cursor.close()
+
+        logger.debug("end")
+        return
 
     def _infer_dialect(self) -> type[csv.Dialect]:
         """
