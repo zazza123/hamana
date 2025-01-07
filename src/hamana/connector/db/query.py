@@ -243,11 +243,27 @@ class Query:
         If not provided, the query result columns matches the database output.
     """
 
-    result: pd.DataFrame | None = None
-    """
-        Result of the query execution. 
-        The result is a DataFrame with the columns defined in the query.
-    """
+    flag_executed: bool = False
+    """Flag to indicate if the query has been executed."""
+
+    @property
+    def result(self) -> pd.DataFrame:
+        """
+            Result of the query execution. 
+            The result is a DataFrame with the columns defined in the query.
+
+            Raises:
+                QueryResultNotAvailable: if no result is available; e.g., the query has not been executed.
+        """
+        if not self.flag_executed:
+            logger.error("query not executed")
+            raise QueryResultNotAvailable("query not executed")
+        return self._result
+
+    @result.setter
+    def result(self, value: pd.DataFrame) -> None:
+        self._result = value
+        self.flag_executed = True
 
     def get_params(self) -> dict[str, ParamValue] | None:
         """
@@ -282,16 +298,8 @@ class Query:
                 table_name: name of the table to create into the database.
                     By assumption, the table's name is converted to uppercase.
                 mode: mode of importing the data into the database.
-
-            Raises:
-                QueryResultNotAvailable: if no result is available.
         """
         logger.debug("start")
-
-        # check result 
-        if self.result is None:
-            logger.error("no result to save")
-            raise QueryResultNotAvailable("no result to save")
         df_insert = self.result.copy()
 
         # set dtype
