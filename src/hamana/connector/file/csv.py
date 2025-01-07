@@ -16,7 +16,7 @@ from .warning import DialectMismatchWarning
 # set logger
 logger = logging.getLogger(__name__)
 
-class CSV:
+class CSVConnector:
     """
         Class representing the connector to a CSV file.  
 

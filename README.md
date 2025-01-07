@@ -63,7 +63,7 @@ import hamana as hm
 hm.connect()
 
 # connect to Oracle database
-oracle_db = hm.connector.db.OracleConnector(
+oracle_db = hm.connector.db.Oracle.new(
     host = "localhost",
     port = 1521,
     user = "user",
@@ -75,7 +75,7 @@ orders = hm.Query("SELECT * FROM orders")
 oracle_db.to_sqlite(orders, table_name = "orders")
 
 # load a CSV file and store it in SQLite
-customers = hm.connector.file.CSVConnector("customers.csv")
+customers = hm.connector.file.CSV("customers.csv")
 customers.to_sqlite(table_name = "customers")
 
 # combine the two tables using SQL

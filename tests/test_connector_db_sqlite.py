@@ -4,8 +4,6 @@ from datetime import datetime
 import pandas as pd
 
 import hamana as hm
-from hamana.connector.db import SQLiteConnector
-from hamana.connector.db.query import Query, QueryColumn, QueryParam, QueryColumnParser, ColumnDataType
 from hamana.connector.db.schema import SQLiteDataImportMode
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 
@@ -13,7 +11,7 @@ DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
 def test_ping() -> None:
     """Test ping method."""
-    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     db.ping()
     return
 
@@ -35,7 +33,7 @@ def test_execute_query_without_meta() -> None:
         the database, even if it intended to be boolean (0 or 1).
     """
     # connect to db
-    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
 
     # execute query
     query = db.execute("SELECT * FROM T_DTYPES WHERE c_integer = 1")
@@ -62,12 +60,12 @@ def test_execute_query_without_meta() -> None:
     assert df.c_timestamp.to_list() == [20210101.010101]
 
     # check dtype
-    assert query.columns[0].dtype == ColumnDataType.INTEGER
-    assert query.columns[1].dtype == ColumnDataType.NUMBER
-    assert query.columns[2].dtype == ColumnDataType.TEXT
-    assert query.columns[3].dtype == ColumnDataType.INTEGER
-    assert query.columns[4].dtype == ColumnDataType.NUMBER
-    assert query.columns[5].dtype == ColumnDataType.NUMBER
+    assert query.columns[0].dtype == hm.query.ColumnDataType.INTEGER
+    assert query.columns[1].dtype == hm.query.ColumnDataType.NUMBER
+    assert query.columns[2].dtype == hm.query.ColumnDataType.TEXT
+    assert query.columns[3].dtype == hm.query.ColumnDataType.INTEGER
+    assert query.columns[4].dtype == hm.query.ColumnDataType.NUMBER
+    assert query.columns[5].dtype == hm.query.ColumnDataType.NUMBER
 
 
 def test_execute_query_with_meta() -> None:
@@ -82,34 +80,34 @@ def test_execute_query_with_meta() -> None:
         the file `tests/init_test_db.py`.
     """
     # connect to db
-    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
 
     # define query
-    query = Query(
+    query = hm.Query(
         query = "SELECT * FROM T_DTYPES WHERE c_integer = :row_id",
         columns = [
-            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
-            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
-            QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
-            QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
-            QueryColumn(
+            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
+            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
+            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
+            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
+            hm.query.QueryColumn(
                 order = 4,
                 name = "c_datetime",
-                dtype = ColumnDataType.DATETIME,
-                parser = QueryColumnParser(
+                dtype = hm.query.ColumnDataType.DATETIME,
+                parser = hm.query.QueryColumnParser(
                     to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
                 )
             ),
-            QueryColumn(
+            hm.query.QueryColumn(
                 order = 5,
                 name = "c_timestamp",
-                dtype = ColumnDataType.DATETIME,
-                parser = QueryColumnParser(
+                dtype = hm.query.ColumnDataType.DATETIME,
+                parser = hm.query.QueryColumnParser(
                     to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
                 )
             )
         ],
-        params = [QueryParam(name = "row_id", value = 1)]
+        params = [hm.query.QueryParam(name = "row_id", value = 1)]
     )
 
     # execute query
@@ -151,15 +149,15 @@ def test_execute_query_re_order_column() -> None:
         execution.
     """
     # connect to db
-    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
 
     # define query
-    query = Query(
+    query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            QueryColumn(order = 2, name = "c_integer", dtype = ColumnDataType.INTEGER),
-            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
-            QueryColumn(order = 0, name = "c_text", dtype = ColumnDataType.TEXT)
+            hm.query.QueryColumn(order = 2, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
+            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
+            hm.query.QueryColumn(order = 0, name = "c_text", dtype = hm.query.ColumnDataType.TEXT)
         ]
     )
 
@@ -182,14 +180,14 @@ def test_execute_query_missing_column() -> None:
     """
 
     # connect to db
-    db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
 
     # define query
-    query = Query(
+    query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
-            QueryColumn(order = 1, name = "c_error")
+            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
+            hm.query.QueryColumn(order = 1, name = "c_error")
         ]
     )
 
@@ -223,10 +221,10 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query("SELECT * FROM T_DTYPES")
+    query_input = hm.Query("SELECT * FROM T_DTYPES")
 
     # save to SQLite
-    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE")
 
     # check result
@@ -265,11 +263,11 @@ def test_to_sqlite_table_exists_fail() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query("SELECT * FROM T_DTYPES")
+    query_input = hm.Query("SELECT * FROM T_DTYPES")
 
     # save to SQLite
     with pytest.raises(TableAlreadyExists):
-        hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+        hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
         hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.FAIL)
 
     hm.disconnect()
@@ -287,10 +285,10 @@ def test_to_sqlite_table_exists_replace() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 1")
+    query_input = hm.Query("SELECT * FROM T_DTYPES WHERE c_integer = 1")
 
     # save to SQLite
-    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.REPLACE)
 
     # check result
@@ -319,10 +317,10 @@ def test_to_sqlite_table_exists_append() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 2")
+    query_input = hm.Query("SELECT * FROM T_DTYPES WHERE c_integer = 2")
 
     # save to SQLite
-    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE", mode = SQLiteDataImportMode.APPEND)
 
     # check result
@@ -353,26 +351,26 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query(
+    query_input = hm.Query(
         query = "SELECT * FROM T_DTYPES WHERE c_integer = 3",
         columns = [
-            QueryColumn(order = 0, name = "c_integer", dtype = ColumnDataType.INTEGER),
-            QueryColumn(order = 1, name = "c_number", dtype = ColumnDataType.NUMBER),
-            QueryColumn(order = 2, name = "c_text", dtype = ColumnDataType.TEXT),
-            QueryColumn(order = 3, name = "c_boolean", dtype = ColumnDataType.BOOLEAN),
-            QueryColumn(
+            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
+            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
+            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
+            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
+            hm.query.QueryColumn(
                 order = 4,
                 name = "c_datetime",
-                dtype = ColumnDataType.DATETIME,
-                parser = QueryColumnParser(
+                dtype = hm.query.ColumnDataType.DATETIME,
+                parser = hm.query.QueryColumnParser(
                     to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
                 )
             ),
-            QueryColumn(
+            hm.query.QueryColumn(
                 order = 5,
                 name = "c_timestamp",
-                dtype = ColumnDataType.DATETIME,
-                parser = QueryColumnParser(
+                dtype = hm.query.ColumnDataType.DATETIME,
+                parser = hm.query.QueryColumnParser(
                     to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
                 )
             )
@@ -380,11 +378,11 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     )
 
     # save to SQLite
-    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
 
     # check result
-    query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
+    query = hm.Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
     hm.execute(query)
     assert query.columns is not None
 
@@ -421,14 +419,14 @@ def test_to_sqlite_table_raw_insert_on() -> None:
     hm.connect(DB_SQLITE_TEST_PATH)
 
     # create query
-    query_input = Query("SELECT * FROM T_DTYPES WHERE c_integer = 3")
+    query_input = hm.Query("SELECT * FROM T_DTYPES WHERE c_integer = 3")
 
     # save to SQLite
-    hamana_db = SQLiteConnector(DB_SQLITE_TEST_PATH)
+    hamana_db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
     hamana_db.to_sqlite(query_input, "T_DB_SQLITE_TO_SQLITE_RAW_ON", raw_insert = True)
 
     # check result
-    query = Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_ON")
+    query = hm.Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_ON")
     hm.execute(query)
     assert query.columns is not None
 

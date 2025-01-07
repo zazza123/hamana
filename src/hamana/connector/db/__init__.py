@@ -1,10 +1,10 @@
-from .sqlite import SQLiteConnector
-from .oracle import OracleConnector
-from .hamana import HamanaConnector
+from .sqlite import SQLiteConnector as SQLite
+from .oracle import OracleConnector as Oracle
+from .hamana import HamanaConnector as Hamana
 
 __all__ = [
     # connectors
-    "SQLiteConnector",
-    "OracleConnector",
-    "HamanaConnector"
+    "SQLite",
+    "Oracle",
+    "Hamana"
 ]

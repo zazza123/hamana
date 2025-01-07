@@ -1,4 +1,4 @@
-from .csv import CSV
+from .csv import CSVConnector as CSV
 
 __all__ = [
     "CSV"
