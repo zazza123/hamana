@@ -11,7 +11,7 @@ from ...connector.db.query import Query, QueryColumn, ColumnDataType
 from ...connector.db.exceptions import TableAlreadyExists
 from ...connector.db.schema import SQLiteDataImportMode
 from .exceptions import CSVColumnNumberMismatchError
-from .warning import DialectMismatchWarning
+from .warnings import DialectMismatchWarning
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ class CSVConnector:
 
             Return:
                 the function automatically creates a `Query` object, 
-                executes the extraction and returns the `Query` object 
+                executes the extraction and returns the object created
                 with the resulting rows.
         """
         logger.debug("start")
@@ -166,7 +166,17 @@ class CSVConnector:
         logger.debug("end")
         return query
 
-    def batch_execute(self, batch_size: int) -> Generator[list[list | tuple], None, None]:
+    def batch_execute(self, batch_size: int) -> Generator[list[list], None, None]:
+        """
+            Function used to extract data from the CSV file and return the results in batches. 
+            This approach is used to avoid memory issues when dealing with large datasets.
+
+            Observe that the returned data are not adjusted in terms of data types, but 
+            provided as raw data.
+
+            Parameters:
+                batch_size: size of the batch to return.
+        """
         logger.debug("start")
         logger.debug(f"batch size: {batch_size}")
 
@@ -210,6 +220,37 @@ class CSVConnector:
         batch_size: int = 10_000,
         mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE
     ) -> None:
+        """
+            This function is used to extract data from the CSV file and 
+            insert it into the `hamana` internal database (HamanaConnector).
+
+            The `hamana` db is a SQLite database, for this reason 
+            `bool`, `datetime` and `timestamp` data types are not supported.
+            If some of the columns are defined with these data types, 
+            then the method could perform an automatic conversion to 
+            a SQLite data type.
+
+            In particular, the conversions are:
+            - `bool` columns are mapped to `INTEGER` data type, with the values 
+            `True` and `False` converted to `1` and `0`.
+            - `datetime` columns are mapped to `REAL` data type, with the values 
+            converted to a float number using the following format: `YYYYMMDD.HHmmss`.
+                Observes that the integer part represents the date in the format YYYYMMDD,
+                while the decimal part represents the time component in the format HHmmss.
+
+            By default, the method performs the automatic datatype 
+            conversion. However, use the parameter `raw_insert` to 
+            **avoid** this conversion and improve the INSERT efficiency. 
+
+            Parameters:
+                table_name: name of the table to insert the data.
+                    By assumption, the table's name is converted to uppercase.
+                raw_insert: bool value to disable/activate the datatype 
+                    conversion during the INSERT process. By default, it is 
+                    set to `True`.
+                batch_size: size of the batch used during the inserting process.
+                mode: mode of importing the data into the database.
+        """
         logger.debug("start")
 
         table_name_upper = table_name.upper()

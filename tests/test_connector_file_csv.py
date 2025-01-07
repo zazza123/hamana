@@ -4,7 +4,7 @@ import pytest
 import pandas as pd
 
 import hamana as hm
-from hamana.connector.file.warning import DialectMismatchWarning
+from hamana.connector.file.warnings import DialectMismatchWarning
 from hamana.connector.file.exceptions import CSVColumnNumberMismatchError
 
 def test_csv_not_exists() -> None:

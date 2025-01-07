@@ -1,4 +1,4 @@
-from ...core.warning import HamanaWarning
+from ...core.warnings import HamanaWarning
 
 class DialectMismatchWarning(HamanaWarning):
     """
