@@ -4,8 +4,8 @@ from datetime import datetime
 import pandas as pd
 
 import hamana as hm
-from hamana.connector.db import SQLiteConnector, Query, QueryColumn, QueryParam, QueryColumnParser
-from hamana.connector.db.query import ColumnDataType
+from hamana.connector.db import SQLiteConnector
+from hamana.connector.db.query import Query, QueryColumn, QueryParam, QueryColumnParser, ColumnDataType
 from hamana.connector.db.schema import SQLiteDataImportMode
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 

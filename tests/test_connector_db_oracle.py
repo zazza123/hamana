@@ -7,8 +7,8 @@ from pytest_mock import MockerFixture
 import pandas as pd
 
 import hamana as hm
-from hamana.connector.db import OracleConnector, Query, QueryColumn
-from hamana.connector.db.query import ColumnDataType, SQLiteDataImportMode
+from hamana.connector.db import OracleConnector
+from hamana.connector.db.query import Query, QueryColumn, ColumnDataType, SQLiteDataImportMode
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"

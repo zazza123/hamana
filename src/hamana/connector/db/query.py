@@ -263,7 +263,7 @@ class Query:
     def to_sqlite(self, table_name: str, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to insert the query result into a 
-            table hosted on the `hamana` internal database (HamanaDatabase).
+            table hosted on the `hamana` internal database (HamanaConnector).
 
             The `hamana` db is a SQLite database, for this reason 
             `bool`, `datetime` and `timestamp` data types are supported.
@@ -309,10 +309,10 @@ class Query:
                         df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d.%H%M%S").astype(float)
 
         # import internal database
-        from ...core.db import HamanaDatabase
+        from .hamana import HamanaConnector
 
         # get instance
-        db = HamanaDatabase.get_instance()
+        db = HamanaConnector.get_instance()
 
         # insert data
         table_name_upper = table_name.upper()

@@ -48,7 +48,7 @@ def test_csv_has_header_false_check() -> None:
         and the file does not have a header.
     """
     csv_file = CSV("tests/data/file/csv_has_header_false.csv")
-    assert csv_file.has_header == False
+    assert not csv_file.has_header
     return
 
 def test_csv_has_header_true_check() -> None:
@@ -57,7 +57,7 @@ def test_csv_has_header_true_check() -> None:
         and the file has a header.
     """
     csv_file = CSV("tests/data/file/csv_has_header_true.csv")
-    assert csv_file.has_header == True
+    assert csv_file.has_header
     return
 
 def test_csv_columns_infer_with_header() -> None:

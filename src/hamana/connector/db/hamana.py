@@ -5,9 +5,9 @@ from abc import ABCMeta
 from pathlib import Path
 from sqlite3 import Connection, connect as sqlite_connect
 
-from ..connector.db.query import Query
-from ..connector.db.sqlite import SQLiteConnector
-from .exceptions import HamanaDatabaseAlreadyInitialised, HamanaDatabaseNotInitialised
+from .query import Query
+from .sqlite import SQLiteConnector
+from .exceptions import HamanaConnectorAlreadyInitialised, HamanaConnectorNotInitialised
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # set singleton db class
 class HamanaSingleton(type):
     """
-        Singleton metaclass for HamanaDatabase to ensure only 
+        Singleton metaclass for HamanaConnector to ensure only 
         one instance during the code execution.
     """
     _instances = {}
@@ -24,16 +24,16 @@ class HamanaSingleton(type):
         if cls not in cls._instances:
             instance = super().__call__(path, *args, **kwargs)
             cls._instances[cls] = instance
-            logger.info("HamanaDatabase is initialized.")
+            logger.info("HamanaConnector is initialized.")
         else:
-            logger.error("HamanaDatabase is already initialized.")
-            raise HamanaDatabaseAlreadyInitialised()
+            logger.error("HamanaConnector is already initialized.")
+            raise HamanaConnectorAlreadyInitialised()
         return cls._instances[cls]
 
-class HamanaDatabaseMeta(HamanaSingleton, ABCMeta):
+class HamanaConnectorMeta(HamanaSingleton, ABCMeta):
     pass
 
-class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
+class HamanaConnector(SQLiteConnector, metaclass = HamanaConnectorMeta):
     """
         This class is responsible for handling the database connection of the library.  
         For each execution, only one instance of this class is allowed to manage a single 
@@ -45,10 +45,10 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
 
         **Example**
         ```python
-        from hamana.core import HamanaDtaabase
+        from hamana.connector.db.hamana import HamanaConnector
 
         # init internal database
-        hamana_db = HamanaDatabase()
+        hamana_db = HamanaConnector()
 
         # doing operations..
         query.to_sqlite(table_name = "t_oracle_output")
@@ -68,27 +68,27 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
     def _connect(self) -> Connection:
         if self._connection is None:
             logger.error("Database connection is not initialized.")
-            raise HamanaDatabaseNotInitialised()
+            raise HamanaConnectorNotInitialised()
         return self._connection
 
     def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None, exc_traceback: TracebackType | None) -> None:
-        logger.debug("connection not closed for HamanaDatabase, use close() method to close the connection.")
+        logger.debug("connection not closed for HamanaConnector, use close() method to close the connection.")
         return
 
     @classmethod
-    def get_instance(cls) -> "HamanaDatabase":
+    def get_instance(cls) -> "HamanaConnector":
         """
             Get the instance of the internal database connector.
 
             Raises:
-                HamanaDatabaseNotInitialised: If the database is not initialized.
+                HamanaConnectorNotInitialised: If the database is not initialized.
         """
         logger.debug("start")
         _instance = cls._instances.get(cls)
 
         if _instance is None:
-            logger.error("HamanaDatabase is not initialized.")
-            raise HamanaDatabaseNotInitialised()
+            logger.error("HamanaConnector is not initialized.")
+            raise HamanaConnectorNotInitialised()
 
         logger.debug("end")
         return _instance
@@ -98,12 +98,12 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
             Get the database connection.
 
             Raises:
-                HamanaDatabaseNotInitialised: If the database is not initialized.
+                HamanaConnectorNotInitialised: If the database is not initialized.
         """
         logger.debug("start")
         if self._connection is None:
             logger.error("Database connection is not initialized.")
-            raise HamanaDatabaseNotInitialised()
+            raise HamanaConnectorNotInitialised()
         logger.debug("end")
         return self._connection
 
@@ -122,7 +122,7 @@ class HamanaDatabase(SQLiteConnector, metaclass = HamanaDatabaseMeta):
             self._connection = None
 
             # remove instance from singleton
-            HamanaDatabase._instances.pop(HamanaDatabase)
+            HamanaConnector._instances.pop(HamanaConnector)
         logger.debug("end")
         return
 
@@ -130,7 +130,7 @@ def connect(path: str | Path = ":memory:") -> None:
     """
         Connect to the database using the path provided.  
         This function is a helper function to connect to the database 
-        without creating an instance of the HamanaDatabase class.
+        without creating an instance of the HamanaConnector class.
 
         Parameters:
             path: path like string that define the SQLite database to load/create.  
@@ -139,7 +139,7 @@ def connect(path: str | Path = ":memory:") -> None:
     logger.debug("start")
 
     # create connection
-    HamanaDatabase(path)
+    HamanaConnector(path)
     logger.info(f"Connected to the database ({path}).")
 
     logger.debug("end")
@@ -149,12 +149,12 @@ def disconnect() -> None:
     """
         Disconnect from the database.  
         This function is a helper function to disconnect from the database 
-        without using an instance of the HamanaDatabase class.
+        without using an instance of the HamanaConnector class.
     """
     logger.debug("start")
 
     # close connection
-    HamanaDatabase.get_instance().close()
+    HamanaConnector.get_instance().close()
     logger.info("Disconnected from the database.")
 
     logger.debug("end")
@@ -184,7 +184,7 @@ def execute(query: Query | str) -> None | Query:
     logger.debug("start")
 
     # execute query
-    result = HamanaDatabase.get_instance().execute(query)
+    result = HamanaConnector.get_instance().execute(query)
     logger.info(f"Query executed successfully: {query}")
 
     logger.debug("end")

@@ -100,7 +100,7 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
     def to_sqlite(self, query: Query, table_name: str, raw_insert: bool = False, batch_size: int = 1000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to extract data from the database and insert it 
-            into the `hamana` internal database (HamanaDatabase).
+            into the `hamana` internal database (HamanaConnector).
 
             The `hamana` db is a SQLite database, for this reason 
             `bool`, `datetime` and `timestamp` data types are not supported.

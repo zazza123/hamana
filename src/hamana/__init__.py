@@ -1,9 +1,18 @@
-from .core import connect, disconnect, execute
+from . import connector
+from .connector.db import query
+from .connector.db.query import Query
+from .connector.db.hamana import connect, disconnect, execute
 
 __version__ = "0.1.0"
 
 __all__ = [
+    # shortcuts
     "connect",
     "disconnect",
-    "execute"
+    "execute",
+    # connetors
+    "connector",
+    # query
+    "query",
+    "Query"
 ]

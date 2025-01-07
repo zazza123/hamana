@@ -207,11 +207,11 @@ class BaseConnector(DatabaseConnectorABC):
         column_names: list[str] = []
 
         # import internal database
-        from ...core.db import HamanaDatabase
+        from .hamana import HamanaConnector
         logger.debug("imported internal database")
 
         # get instance
-        hamana_db = HamanaDatabase.get_instance()
+        hamana_db = HamanaConnector.get_instance()
         hamana_connection = hamana_db.get_connection()
         logger.debug("internal database instance obtained")
 

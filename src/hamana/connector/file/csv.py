@@ -221,11 +221,11 @@ class CSV:
         )
 
         # import internal database
-        from ...core.db import HamanaDatabase
+        from ..db.hamana import HamanaConnector
         logger.debug("imported internal database")
 
         # get instance
-        hamana_db = HamanaDatabase.get_instance()
+        hamana_db = HamanaConnector.get_instance()
         hamana_connection = hamana_db.get_connection()
         logger.debug("internal database instance obtained")
 
