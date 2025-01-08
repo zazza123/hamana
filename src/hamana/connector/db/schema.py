@@ -16,6 +16,29 @@ class SQLiteDataImportMode(str, Enum):
     FAIL = "fail"
     """Fail if the table already exists."""
 
+class BooleanMapper(BaseModel):
+    """
+        Class used to define a list of values to me mapped 
+        to a boolean value.
+    """
+
+    true: list[str | int | float]
+    """List of values to be mapped to `True`."""
+
+    false: list[str | int | float]
+    """List of values to be mapped to `False`."""
+
+    def to_pandas_map(self) -> dict:
+        """
+            Method to convert the class to a dictionary that can 
+            be used to map values in a pandas `DataFrame` via 
+            `map`method.
+
+            Returns:
+                dict: The output dictionary has a structure of `{value: boolean}`.
+        """
+
+        return {**{value: True for value in self.true}, **{value: False for value in self.false}}
 
 class DatabaseConnectorConfig(BaseModel):
     """

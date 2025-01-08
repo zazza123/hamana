@@ -5,7 +5,7 @@ from collections.abc import Callable
 import pandas as pd
 from pydantic import BaseModel
 
-from .schema import SQLiteDataImportMode
+from .schema import SQLiteDataImportMode, BooleanMapper
 from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable, ColumnDataTypeConversionError
 
 # set logging
@@ -105,6 +105,7 @@ class QueryColumnParser:
                 Default function converts the column to `bool` using the `astype` method.
             to_datetime: function to convert a column of `ColumnDataType.DATETIME` type.
                 Default function converts the column to `datetime` using the `pd.to_datetime` method.
+            boolean_mapper: mapper used to convert boolean values.
     """
 
     def __init__(
@@ -113,23 +114,21 @@ class QueryColumnParser:
         to_number: QueryColumnParserType | None = None,
         to_text: QueryColumnParserType | None = None,
         to_boolean: QueryColumnParserType | None = None,
-        to_datetime: QueryColumnParserType | None = None
+        to_datetime: QueryColumnParserType | None = None,
+        boolean_mapper: BooleanMapper | None = None
     ) -> None:
 
-        self.boolean_mapper = {
-            "True": True, "False": False,
-            "true": True, "false": False,
-            "1": True, "0": False,
-            "Y": True, "N": False,
-            1: True, 0: False
-        }
+        self.boolean_mapper = BooleanMapper(
+            true = ["True", "true", "1", "Y", 1],
+            false = ["False", "false", "0", "N", 0]
+        ) if boolean_mapper is None else boolean_mapper
         """Mapper used to convert boolean values."""
 
         # set default parsers
         self.to_int = to_int if to_int else lambda series: pd.to_numeric(series, errors = "coerce", downcast = "integer")
         self.to_number = to_number if to_number else lambda series: pd.to_numeric(series, errors = "coerce")
         self.to_text = to_text if to_text else lambda series: series.astype("object")
-        self.to_boolean = to_boolean if to_boolean else lambda series: series.map(self.boolean_mapper)
+        self.to_boolean = to_boolean if to_boolean else lambda series: series.map(self.boolean_mapper.to_pandas_map())
         self.to_datetime = to_datetime if to_datetime else lambda series: pd.to_datetime(series)
 
     def parse(self, series: pd.Series, dtype: ColumnDataType) -> pd.Series:
