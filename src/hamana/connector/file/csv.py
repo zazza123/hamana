@@ -162,7 +162,8 @@ class CSVConnector:
             filepath_or_buffer = self.file_path,
             dialect = self.dialect, # type: ignore
             header = 0 if self.has_header else None,
-            names = [column.name for column in self.columns]
+            names = [column.name for column in self.columns],
+            encoding = self.encoding
         )
         logger.info(f"data extracted, rows: {df_result.shape[0]}, columns: {df_result.shape[1]}")
 
