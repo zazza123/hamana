@@ -4,13 +4,14 @@ import warnings
 from pathlib import Path
 from typing import Generator
 from datetime import datetime
+from locale import getencoding
 
 import pandas as pd
 
 from ...connector.db.query import Query, QueryColumn, ColumnDataType
 from ...connector.db.exceptions import TableAlreadyExists
 from ...connector.db.schema import SQLiteDataImportMode
-from .exceptions import CSVColumnNumberMismatchError
+from .exceptions import CSVColumnNumberMismatchError, CSVDecodeRowError
 from .warnings import DialectMismatchWarning
 
 # set logger
@@ -28,9 +29,9 @@ class CSVConnector:
 
         **Example:**
         ```python
-            from hamana.connector.file import CSV
+            import hamana as hm
 
-            csv_file = CSV('path/to/file.csv')
+            csv_file = hm.connector.file.CSV('path/to/file.csv')
             query = csv_file.execute()
 
             print(query.result.head())
@@ -57,6 +58,8 @@ class CSVConnector:
                 The data type of the columns will be infered automatically 
                 by taking a sample of 1000 rows from the file, converted into a 
                 DataFrame, and using the data types from the DataFrame.
+            encoding: Define the encoding to use during the reading process of the file.
+                By default, the class uses the system encoding retrieved by the `locale.getencoding()` method.
     """
 
     # variables
@@ -69,6 +72,9 @@ class CSVConnector:
     dialect: type[csv.Dialect]
     """Dialect of the CSV file."""
 
+    encoding: str
+    """Encoding to use during the reading process of the file."""
+
     has_header: bool
     """Flag to indicate if the CSV file has a header."""
 
@@ -80,12 +86,16 @@ class CSVConnector:
         file_path: str | Path,
         dialect: type[csv.Dialect] | None = None,
         has_header: bool | None = None,
-        columns: list[QueryColumn] | None = None
+        columns: list[QueryColumn] | None = None,
+        encoding: str = getencoding()
     ) -> None:
         logger.debug("start")
 
         self.file_path = Path(file_path)
         logger.debug(f"file_path: {self.file_path}")
+
+        self.encoding = encoding
+        logger.debug(f"encoding: {self.encoding}")
 
         # check file existance
         if not self.file_path.exists():
@@ -183,7 +193,7 @@ class CSVConnector:
         # open file
         dt_start = datetime.now()
         logger.debug(f"open file {self.file_path}")
-        with open(self.file_path, "r", newline = "") as file:
+        with open(self.file_path, "r", newline = "", encoding = self.encoding) as file:
             reader = csv.reader(file, dialect = self.dialect)
 
             # skip header
@@ -193,17 +203,26 @@ class CSVConnector:
 
             # read rows
             batch = []
+            row_count = 1
             batch_count = 1
-            for row in reader:
-                batch.append(row)
-                if len(batch) == batch_size:
-                    if batch_count % 100 == 0:
-                        logger.info(f"batch {batch_count} read")
-                    yield batch
 
-                    # reset batch
-                    batch = []
-                    batch_count += 1
+            try:
+                for row in reader:
+                    batch.append(row)
+                    row_count += 1
+                    if len(batch) == batch_size:
+                        if batch_count % 100 == 0:
+                            logger.info(f"batch {batch_count} read")
+                        yield batch
+
+                        # reset batch
+                        batch = []
+                        batch_count += 1
+            except UnicodeDecodeError as e:
+                err_msg = f"ERROR: parsing {row_count + 1} row."
+                logger.error(err_msg)
+                logger.exception(e)
+                raise CSVDecodeRowError(err_msg)
 
             # yield remaining rows
             if len(batch) > 0:
@@ -211,6 +230,7 @@ class CSVConnector:
 
         dt_end = datetime.now()
         logger.info(f"file read, elapsed time: {dt_end - dt_start}")
+        logger.info(f"{row_count} rows processed ({batch_count} batches)")
         logger.debug("end")
 
     def to_sqlite(
@@ -354,7 +374,7 @@ class CSVConnector:
         """
         logger.debug("start")
 
-        with open(self.file_path, "r", newline = "") as file:
+        with open(self.file_path, "r", newline = "", encoding = self.encoding) as file:
             dialect = csv.Sniffer().sniff(file.read(2048))
 
         logger.debug("end")
@@ -406,7 +426,7 @@ class CSVConnector:
         """
         logger.debug("start")
 
-        with open(self.file_path, "r", newline = "") as file:
+        with open(self.file_path, "r", newline = "", encoding = self.encoding) as file:
             has_header = csv.Sniffer().has_header(file.read(2048))
 
         logger.debug("end")
@@ -440,7 +460,7 @@ class CSVConnector:
         )
 
         # read first row
-        with open(self.file_path, "r", newline = "") as file:
+        with open(self.file_path, "r", newline = "", encoding = self.encoding) as file:
             reader = csv.reader(file, dialect = self.dialect)
             header = next(reader)
 
