@@ -32,12 +32,19 @@ class ConnectionProtocol(Protocol):
 
 class DatabaseConnectorABC(metaclass = ABCMeta):
     """
-        The following abtract class defines a general database connector.  
+        The following abstract class defines a general database connector.  
         A connector is used in order to connect to a database and perform operations on it.
+
+        All `hamana` connectors must inherit from this class.
     """
 
     connection: ConnectionProtocol
-    """Database connection."""
+    """
+        Database connection.
+
+        This attribute is used to store the connection to the database 
+        and **must** satisfy the PEP 249 Standard Database API Specification v2.0.
+    """
 
     @abstractmethod
     def _connect(self) -> ConnectionProtocol:
@@ -67,20 +74,22 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
     @abstractmethod
     def execute(self, query: Query | str) -> None | Query:
         """
-            Function used to extract data from the database.
+            Function used to extract data from the database by 
+            executin a SELECT query.
 
             Parameters:
-                query: query to execute on database.
+                query: query to execute on database. The query could be 
+                    a string or a `Query` object. If the query is a string, 
+                    then the function automatically creates a `Query` object.
 
-            Return:
-                the result depend on the input provided.
-                If query is a string, then the function automatically 
-                creates a Query object, execute the extraction and 
-                return the Query object with the result.
-
-                If query is a Query object, then the function performs 
-                the extraction and return None because the result is stored 
-                in the object itself.
+            Returns:
+                The result depends on the input provided. 
+                    If query is a string, then  the function automatically 
+                    creates a `Query` object, executes the extraction and 
+                    returns the `Query` object with the result. 
+                    If query is a `Query` object, then the function performs 
+                    the extraction and return None because the result is stored 
+                    in the object itself.
         """
         raise NotImplementedError
 
@@ -93,14 +102,17 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             Parameters:
                 query: query to execute on database.
                 batch_size: size of the batch to return.
+
+            Returns:
+                Generator used to return the results in batches.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def to_sqlite(self, query: Query, table_name: str, raw_insert: bool = False, batch_size: int = 1000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
+    def to_sqlite(self, query: Query, table_name: str, raw_insert: bool = False, batch_size: int = 10_000, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to extract data from the database and insert it 
-            into the `hamana` internal database (HamanaConnector).
+            into the `hamana` internal database (`HamanaConnector`).
 
             The `hamana` db is a SQLite database, for this reason 
             `bool`, `datetime` and `timestamp` data types are not supported.
@@ -108,13 +120,14 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             then the method could perform an automatic conversion to 
             a SQLite data type.
 
-            In particular, the conversions are:
+            The conversions are:
+
             - `bool` columns are mapped to `INTEGER` data type, with the values 
-            `True` and `False` converted to `1` and `0`.
+                `True` and `False` converted to `1` and `0`.
             - `datetime` columns are mapped to `REAL` data type, with the values 
-            converted to a float number using the following format: `YYYYMMDD.HHmmss`.
-                Observes that the integer part represents the date in the format YYYYMMDD,
-                while the decimal part represents the time component in the format HHmmss.
+                converted to a float number using the following format: `YYYYMMDD.HHmmss`.
+                Observe that the integer part represents the date in the format `YYYYMMDD`,
+                while the decimal part represents the time component in the format `HHmmss`.
 
             By default, the method performs the automatic datatype 
             conversion. However, use the parameter `raw_insert` to 
@@ -126,7 +139,7 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
                     By assumption, the table's name is converted to uppercase.
                 raw_insert: bool value to disable/activate the datatype 
                     conversion during the INSERT process. By default, it is 
-                    set to `True`.
+                    set to `False`.
                 batch_size: size of the batch used during the inserting process.
                 mode: mode of importing the data into the database.
         """

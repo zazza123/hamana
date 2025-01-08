@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class SQLiteConnector(BaseConnector):
     """
-        Class to represent a connector to an SQLite database.
+        Class representing a connector to a SQLite database.
     """
 
     def __init__(self, path: str, **kwargs: dict[str, Any]) -> None:

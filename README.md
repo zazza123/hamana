@@ -8,7 +8,7 @@
 ---
 
 <p class="readme">
-  <b>Documentation</b>: <a href="https://zazza123.github.io/hamana">https://zazza123.github.io/hamana</a>
+    <b>Documentation</b>: <a href="https://zazza123.github.io/hamana">https://zazza123.github.io/hamana</a>
 </p>
 <hr class="readme">
 
@@ -25,6 +25,7 @@
 ## Key Features
 
 ### 1. Data Extraction
+
 Hamana allows you to extract data from a variety of sources:
 
 - Relational databases (SQLite, Oracle, etc.)
@@ -34,12 +35,14 @@ Hamana allows you to extract data from a variety of sources:
 Extractions are automatically saved as `pandas` **DataFrames**, making data manipulation simple and intuitive.
 
 ### 2. SQLite Storage
+
 Each extraction can be saved in an **SQLite** database, enabling you to:
 
 - Store data locally for future use
 - Perform `SQL` queries to combine extractions from different sources
 
 ### 3. Data Analysis
+
 With Hamana, you can:
 
 - Use `pandas` to quickly and flexibly manipulate data
@@ -47,6 +50,7 @@ With Hamana, you can:
 - Integrate `SQL` and `pandas` into a single workflow for advanced analysis
 
 ## Installation
+
 Hamana is available on [PyPI](https://pypi.org/project/hamana/), and you can install it easily with pip:
 
 ```bash
@@ -54,6 +58,7 @@ pip install hamana
 ```
 
 ## Usage Example
+
 Here is an example of how to use Hamana to connect to a data source, extract information, and combine it with another table:
 
 ```python
@@ -97,21 +102,26 @@ hm.disconnect()
 ```
 
 ## How to Contribute
+
 If you want to contribute to Hamana:
 
 1. Fork the repository.
 2. Create a branch for your changes:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+
 3. Submit a pull request describing the changes.
 
 All contributions are welcome!
 
 ## License
+
 This project is distributed under the **MIT** license.
 
 ## Contact
+
 For questions or suggestions, you can open an **Issue** on GitHub or contact me directly.
 
 ---

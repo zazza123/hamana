@@ -19,7 +19,7 @@ class OracleConnectorConfig(DatabaseConnectorConfig):
     """
 
     port: int = 1521
-    """Port of the Oracle database. Default is 1521."""
+    """Port of the database. Default is 1521."""
 
     service: str | None = None
     """Service name of the database."""
@@ -29,15 +29,17 @@ class OracleConnectorConfig(DatabaseConnectorConfig):
 
     @property
     def connect_params(self) -> ConnectParams:
+        """Get the connection parameters to connect on the database."""
         return ConnectParams(host = self.host, port = self.port, service_name = self.service, user = self.user, password = self.password) # type: ignore
 
     def get_data_source_name(self) -> str:
+        """Get the DSN connection string to connect on the database."""
         return self.data_source_name if self.data_source_name else self.connect_params.get_connect_string()
 
 
 class OracleConnector(BaseConnector):
     """
-        Class to represent a connector to an Oracle database.
+        Class representing a connector to an Oracle database.
     """
 
     def __init__(self, config: OracleConnectorConfig, **kwargs: dict[str, Any]) -> None:
@@ -66,6 +68,9 @@ class OracleConnector(BaseConnector):
                 port: Port of the database.
                 data_source_name: DSN connection string to connect on the database. 
                     Observe that if DSN is provided, then host, service and port are ignored.
+
+            Returns:
+                Oracle connector configuration.
         """
         logger.debug("start")
 
@@ -100,6 +105,9 @@ class OracleConnector(BaseConnector):
                 port: Port of the database.
                 data_source_name: DSN connection string to connect on the database. 
                     Observe that if DSN is provided, then host, service and port are ignored.
+
+            Returns:
+                Oracle connector.
         """
         logger.debug("start")
         config = cls.create_config(

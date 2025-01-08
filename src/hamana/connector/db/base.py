@@ -14,7 +14,13 @@ logger = logging.getLogger(__name__)
 
 class BaseConnector(DatabaseConnectorABC):
     """
-        Class to represent a connector to a database.
+        Class representing a generic database connector that can be 
+        used to define new database connectors satisfying the 
+        Python Database API Specification v2.0.
+
+        New connectors that inherit from this class must implement 
+        the `_connect` method returning the connection proper connection 
+        object satisfying PEP 249.
     """
 
     def __enter__(self):
@@ -197,7 +203,7 @@ class BaseConnector(DatabaseConnectorABC):
         query: Query,
         table_name: str,
         raw_insert: bool = False,
-        batch_size: int = 1000,
+        batch_size: int = 10_000,
         mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE
     ) -> None:
         logger.debug("start")
