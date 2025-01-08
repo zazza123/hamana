@@ -173,7 +173,7 @@ def test_execute_csv_without_header_with_meta() -> None:
     assert first_row[2] == "Hello"
     assert first_row[3] == True
     assert first_row[4] == datetime(2023, 1, 1)
-    assert first_row[5] == datetime(2023, 1, 1, 0, 0, 0)
+    assert first_row[5] == datetime(2023, 1, 1, 1, 2, 3)
 
     return
 
