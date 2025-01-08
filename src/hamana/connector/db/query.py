@@ -126,8 +126,8 @@ class QueryColumnParser:
         """Mapper used to convert boolean values."""
 
         # set default parsers
-        self.to_int = to_int if to_int else lambda series: series.astype("int64")
-        self.to_number = to_number if to_number else lambda series: series.astype("float64")
+        self.to_int = to_int if to_int else lambda series: pd.to_numeric(series, errors = "coerce", downcast = "integer")
+        self.to_number = to_number if to_number else lambda series: pd.to_numeric(series, errors = "coerce")
         self.to_text = to_text if to_text else lambda series: series.astype("object")
         self.to_boolean = to_boolean if to_boolean else lambda series: series.map(self.boolean_mapper)
         self.to_datetime = to_datetime if to_datetime else lambda series: pd.to_datetime(series)
@@ -485,7 +485,7 @@ class Query:
                 except Exception as e:
                     logger.error("ERROR: on datatype change")
                     logger.error(e)
-                    raise ColumnDataTypeConversionError(f"ERROR: on datatype change for {column.name}")
+                    raise ColumnDataTypeConversionError(f"ERROR: on datatype change for {column.name} (order: {column.order})")
 
         logger.debug("end")
         return df
