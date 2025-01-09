@@ -54,10 +54,10 @@ The power of `hamana` lies in its ability to load data into the SQLite database 
 Example:
 
 ```python
-from hamana.connector.db import OracleConnector
+from hamana.connector.db import Oracle
 
 # extract data from an Oracle database
-oracle_db = OracleConnector(
+oracle_db = Oracle.new(
     host = "localhost",
     port = 1521,
     user = "user",
@@ -73,11 +73,11 @@ employees = oracle_db.execute("SELECT * FROM employees")
 Example:
 
 ```python
-from hamana.connector.file import CSVConnector
+from hamana.connector.file import CSV
 
-# Load data from a CSV file
-csv_conn = CSVConnector("path/to/file.csv")
-data = csv_conn.load()
+# load data from a CSV file
+csv_file = CSV("data/orders.csv")
+orders = csv_file.execute()
 ```
 
 ### Modular Design
@@ -95,11 +95,11 @@ The following table provides a detailed summary of the available connectors:
 
 | Type                   | Sources                 | Path                    | Connector                    |
 |------------------------|-------------------------|-------------------------|------------------------------|
-| Relational Database    | Oracle                  | `hamana.connector.db`   | [OracleConnector](connector/db/oracle.md) |
-| Relational Database    | Teradata                | `hamana.connector.db`   | [TeradataConnector](#)       |
-| Relational Database    | SQLite                  | `hamana.connector.db`   | [SQLiteConnector](connector/db/sqlite.md) |
-| File Connector         | CSV                     | `hamana.connector.file` | [CSVConnector](#)            |
-| File Connector         | JSON                    | `hamana.connector.file` | [JSONConnector](#)           |
-| File Connector         | Positional Files        | `hamana.connector.file` | [PositionalFileConnector](#) |
+| Relational Database    | Oracle                  | `hamana.connector.db`   | [Oracle](connector/db/oracle.md) |
+| Relational Database    | Teradata                | `hamana.connector.db`   | [Teradata](#)       |
+| Relational Database    | SQLite                  | `hamana.connector.db`   | [SQLite](connector/db/sqlite.md) |
+| File Connector         | CSV                     | `hamana.connector.file` | [CSV](#)            |
+| File Connector         | JSON                    | `hamana.connector.file` | [JSON](#)           |
+| File Connector         | Positional Files        | `hamana.connector.file` | [PositionalFile](#) |
 
 Each connector's page provides detailed usage instructions and examples.
