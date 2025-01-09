@@ -93,6 +93,10 @@ nav:
       - connector/db/index.md
       - Oracle: connector/db/oracle.md
       - SQLite: connector/db/sqlite.md
+      - Exceptions: connector/db/exceptions.md
+    - File:
+      - CSV: connector/file/csv.md
+      - Exceptions: connector/file/exceptions.md
 
 extra_css:
   - config/css/mkdocstrings.css
