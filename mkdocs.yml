@@ -88,13 +88,15 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Usage: usage.md
-  - Connetors:
+  - Connectors:
     - Database:
       - connector/db/index.md
+      - Hamana: connector/db/hamana.md
       - Oracle: connector/db/oracle.md
       - SQLite: connector/db/sqlite.md
       - Exceptions: connector/db/exceptions.md
     - File:
+      - connector/file/index.md
       - CSV: connector/file/csv.md
       - Exceptions: connector/file/exceptions.md
 

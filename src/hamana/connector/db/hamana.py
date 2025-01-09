@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # set singleton db class
 class HamanaSingleton(type):
     """
-        Singleton metaclass for HamanaConnector to ensure only 
+        Singleton metaclass for `HamanaConnector` to ensure only 
         one instance during the code execution.
     """
     _instances = {}
@@ -130,7 +130,7 @@ def connect(path: str | Path = ":memory:") -> None:
     """
         Connect to the database using the path provided.  
         This function is a helper function to connect to the database 
-        without creating an instance of the HamanaConnector class.
+        without creating an instance of the `HamanaConnector` class.
 
         Parameters:
             path: path like string that define the SQLite database to load/create.  
@@ -149,7 +149,7 @@ def disconnect() -> None:
     """
         Disconnect from the database.  
         This function is a helper function to disconnect from the database 
-        without using an instance of the HamanaConnector class.
+        without using an instance of the `HamanaConnector` class.
     """
     logger.debug("start")
 
@@ -172,14 +172,18 @@ def execute(query: Query | str) -> None | Query:
         This function is a helper function to execute a query on the `hamana` SQLite database.
 
         Parameters:
-            query: query to execute on the database.
+            query: query to execute on database. The query could be 
+                a string or a `Query` object. If the query is a string, 
+                then the function automatically creates a `Query` object.
 
-        Return:
-            the result depend on the input provided.  
-            If query is a string, then the function automatically creates a Query object, 
-            execute the extraction and return the Query object with the result.  
-            If query is a Query object, then the function performs the extraction and return 
-            None because the result is stored in the object itself.
+        Returns:
+            The result depends on the input provided. 
+                If query is a string, then  the function automatically 
+                creates a `Query` object, executes the extraction and 
+                returns the `Query` object with the result. 
+                If query is a `Query` object, then the function performs 
+                the extraction and return None because the result is stored 
+                in the object itself.
     """
     logger.debug("start")
 
