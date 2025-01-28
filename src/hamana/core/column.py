@@ -23,7 +23,22 @@ class PandasParsingModes(Enum):
 
 class DataType(Enum):
     """
-        Enumeration to represent the data types of the columns.
+        Enumeration representing the datatypes of the `hamana` columns.
+
+        The library supports the following data types:
+            - `INTEGER`: integer data type.
+            - `NUMBER`: number data type.
+            - `STRING`: string data type.
+            - `BOOLEAN`: boolean data type.
+            - `DATETIME`: datetime data type.
+            - `CUSTOM`: custom data type.
+
+        The `CUSTOM` data type is used to represent a custom datatype 
+        that could be used for dedicated implementations.
+
+        Since the library is designed to be used with `pandas` and `sqlite`, 
+        the `DataType` enumeration also provides a method to map the data types 
+        to the corresponding data types in `sqlite` and `pandas`.
     """
 
     INTEGER = "integer"
@@ -47,7 +62,9 @@ class DataType(Enum):
     @classmethod
     def from_pandas(cls, dtype: str) -> "DataType":
         """
-            Function to map a pandas data type to a `DataType`.
+            Function to map a `pandas` datatype to `DataType`.
+
+            Observe that if no mapping is found, the default is `DataType.STRING`.
 
             Parameters:
                 dtype: pandas data type.
@@ -72,7 +89,7 @@ class DataType(Enum):
     @classmethod
     def to_sqlite(cls, dtype: "DataType") -> str:
         """
-            Function to map a `DataType` to a SQLite data type.
+            Function to map a `DataType` to a SQLite datatype.
 
             Parameters:
                 dtype: `DataType` to be mapped.
@@ -97,11 +114,24 @@ class DataType(Enum):
                 return ""
 
 class PandasParser(Protocol):
+    """
+        Protocol representing a parser for `pandas` series.
+
+        A `pansas` parser is a function that requires at least a `pandas` series 
+        to be taken as input and returned as output after dedicated transformations.
+    """
     def __call__(self, series: PandasSeries, *args: Any, **kwargs: Any) -> PandasSeries:
         ...
 
 @dataclass
 class ColumnParser:
+    """
+        Class representing a parser for a column in the `hamana` library.
+
+        Since the library is designed to be used with `pandas` and `polars`, 
+        the `ColumnParser` class provides methods that could be used to parse 
+        data coming from these libraries.
+    """
     pandas: PandasParser
     polars: Callable | None = None
 
@@ -113,7 +143,14 @@ class ColumnIdentifier:
 @dataclass
 class Column:
     """
-        Class to represent the column.
+        Class representing a column in the `hamana` library.
+
+        To define a column, the following attributes are required:
+            - `name`: name of the column.
+            - `dtype`: represents the datatype and should be an instance of `DataType`.
+            - `parser`: a column in `hamana`could have an associated `parser` object 
+                that could be used to parse list of values; e.g. useful when data are 
+                extracted from different data sources and should be casted  and normalized.
     """
 
     name: str
@@ -123,18 +160,33 @@ class Column:
     """Data type of the column."""
 
     parser: ColumnParser | None
-    """Parser function for the column."""
+    """Parser object for the column."""
 
 class NumberColumn(Column):
     """
-        Class to representng a number column type.
+        Dedicated class representing `DataType.NUMBER` columns. 
+
+        The class provides attributes that could be used to define 
+        the properties of the number column, such as:
+            - `decimal_separator`: the decimal separator used in the number.
+                By default, the decimal separator is set to `.`.
+            - `thousands_separator`: the thousands separator used in the number.
+                By default, the thousands separator is set to `,`.
+            - `null_default_value`: the default value to be used when a null value is found.
+                By default, the default value is set to `None`.
+
+        The class also provides a default parser that could be used to parse 
+        the number column using `pandas`.
     """
 
     decimal_separator: str
+    """Decimal separator used in the number."""
 
     thousands_separator: str
+    """Thousands separator used in the number."""
 
     null_default_value: int | float | None
+    """Default value to be used when a null value is found."""
 
     def __init__(
         self,
@@ -150,8 +202,13 @@ class NumberColumn(Column):
         self.null_default_value = null_default_value
         self.parser: ColumnParser # type: ignore
 
+        logger.debug(f"decimal separator: {self.decimal_separator}")
+        logger.debug(f"thousands separator: {self.thousands_separator}")
+        logger.debug(f"null default value: {self.null_default_value}")
+
         # set default parser
         if parser is None:
+            logger.debug("set default parser")
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
@@ -160,7 +217,27 @@ class NumberColumn(Column):
         return
 
     def pandas_default_parser(self, series: PandasSeries, mode: PandasParsingModes = PandasParsingModes.RAISE) -> PandasSeries:
+        """
+            Default `pandas` parser for the number columns. The function 
+            converts first the column to string type and replaces the 
+            thousands separator with an empty string and the decimal 
+            separator with `.`. Then, the function tries to convert the 
+            column to a numeric type using the `pandas.to_numeric`.
 
+            If the `null_default_value` is set, the function fills the 
+            null values with the default value.
+
+            Parameters:
+                series: `pandas` series to be parsed.
+                mode: mode to be used when parsing the number column.
+                    By default, the mode is set to `PandasParsingModes.RAISE`.
+
+            Returns:
+                `pandas` series parsed.
+
+            Raises:
+                `ColumnParserPandasNumberError`: error parsing the number column.
+        """
         try:
             series = pd.to_numeric(series.str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
         except Exception as e:
@@ -168,10 +245,26 @@ class NumberColumn(Column):
             raise ColumnParserPandasNumberError(f"error parsing number: {e}")
 
         if self.null_default_value is not None:
+            logger.debug(f"fill nulls, default value: {self.null_default_value}")
             return series.fillna(self.null_default_value)
         return series
 
 class IntegerColumn(NumberColumn):
+    """
+        Class representing `DataType.INTEGER` columns. 
+        It ehrits from the `NumberColumn` class and provides 
+        a default parser that could be used to parse integer columns.
+
+        Similar to the `NumberColumn` class, the `IntegerColumn` class
+        provides attributes that could be used to define the properties
+        of the integer column, such as:
+            - `decimal_separator`: the decimal separator used in the number.
+                By default, the decimal separator is set to `.`.
+            - `thousands_separator`: the thousands separator used in the number.
+                By default, the thousands separator is set to `,`.
+            - `null_default_value`: the default value to be used when a null value is found.
+                By default, the default value is set to `0`.
+    """
 
     def __init__(
         self,
@@ -189,6 +282,30 @@ class IntegerColumn(NumberColumn):
         self.dtype = DataType.INTEGER
 
     def pandas_default_parser(self, series: PandasSeries, mode: PandasParsingModes = PandasParsingModes.RAISE) -> PandasSeries:
+        """
+            Default `pandas` parser for the integer columns. Similar 
+            to the `NumberColumn` class, the function converts first 
+            the column to string type and replaces the thousands separator
+            with an empty string and the decimal separator with `.`. 
+            Then, the function tries to convert the column to a numeric
+            type using the `pandas.to_numeric`.
+
+            If the `null_default_value` is set, the function fills the
+            null values with the default value, and casts the column to 
+            integer type. Otherwise, the function applies the `np.floor`
+            function to the returned series.
+
+            Parameters:
+                series: `pandas` series to be parsed.
+                mode: mode to be used when parsing the number column.
+                    By default, the mode is set to `PandasParsingModes.RAISE`.
+
+            Returns:
+                `pandas` series parsed.
+
+            Raises:
+                `ColumnParserPandasNumberError`: error parsing the number column.
+        """
 
         try:
             series = pd.to_numeric(series.str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
@@ -197,12 +314,14 @@ class IntegerColumn(NumberColumn):
             raise ColumnParserPandasNumberError(f"error parsing integer: {e}")
 
         if self.null_default_value is not None:
+            logger.debug(f"fill nulls, default value: {self.null_default_value}")
             return series.fillna(self.null_default_value).astype("int")
+
         return series.apply(np.floor)
 
 class StringColumn(Column):
     """
-        Class to representng a string column type.
+        Class representing `DataType.STRING` columns.
     """
 
     def __init__(self, name: str, parser: ColumnParser | None = None):
@@ -211,6 +330,7 @@ class StringColumn(Column):
 
         # set default parser
         if parser is None:
+            logger.debug("set default parser")
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
@@ -219,10 +339,34 @@ class StringColumn(Column):
         return
 
     def pandas_default_parser(self, series: PandasSeries) -> PandasSeries:
+        """
+            Default `pandas` parser for the string columns. The function
+            converts the column to string type and replaces the null values
+            with `None`.
+
+            Parameters:
+                series: `pandas` series to be parsed.
+
+            Returns:
+                `pandas` series parsed
+        """
         _series_nulls = series.isnull()
         return series.astype("str").where(~_series_nulls, None)
 
 class BooleanColumn(Column):
+    """
+        Class representing `DataType.BOOLEAN` columns.
+
+        The class provides attributes that could be used to define 
+        the properties of the boolean column, such as: 
+            - `true_value`: the value to be used to represent the `True` value.
+                By default, the value is set to `Y`.
+            - `false_value`: the value to be used to represent the `False` value.
+                By default, the value is set to `N`.
+
+        The class also provides a default parser that could be used to parse
+        the boolean column using `pandas`.
+    """
 
     def __init__(self,
         name: str,
@@ -236,8 +380,12 @@ class BooleanColumn(Column):
         self.false_value = false_value
         self.parser: ColumnParser # type: ignore
 
+        logger.debug(f"true value: {self.true_value}")
+        logger.debug(f"false value: {self.false_value}")
+
         # set default parser
         if parser is None:
+            logger.debug("set default parser")
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
@@ -246,9 +394,35 @@ class BooleanColumn(Column):
         return
 
     def pandas_default_parser(self, series: PandasSeries) -> PandasSeries:
+        """
+            Default `pandas` parser for the boolean columns. The function
+            converts the column to string type and maps the values to `True`
+            and `False` based on the `true_value` and `false_value` attributes.
+
+            Observe that all other values are set to `None`.
+
+            Parameters:
+                series: `pandas` series to be parsed.
+
+            Returns:
+                `pandas` series parsed.
+        """
         return series.astype("str").map({self.true_value: True, self.false_value: False})
 
 class DatetimeColumn(Column):
+    """
+        Class representing `DataType.DATETIME` columns.
+
+        The class provides attributes that could be used to define 
+        the properties of the datetime column, such as:
+            - `format`: the format to be used to parse the datetime.
+                By default, the format is set to `%Y-%m-%d %H:%M:%S`.
+            - `null_default_value`: the default value to be used when a null value is found.
+                By default, the default value is set to `None`.
+
+        The class also provides a default parser that could be used to parse
+        the datetime column using `pandas`.
+    """
 
     def __init__(self,
         name: str,
@@ -262,8 +436,12 @@ class DatetimeColumn(Column):
         self.null_default_value = null_default_value
         self.parser: ColumnParser # type: ignore
 
+        logger.debug(f"format: {self.format}")
+        logger.debug(f"null default value: {self.null_default_value}")
+
         # set default parser
         if parser is None:
+            logger.debug("set default parser")
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
@@ -272,6 +450,34 @@ class DatetimeColumn(Column):
         return
 
     def pandas_default_parser(self, series: PandasSeries, mode: PandasParsingModes = PandasParsingModes.RAISE) -> PandasSeries:
+        """
+            Default `pandas` parser for the datetime columns. The function
+            tries to convert the column to a datetime type using the `pandas.to_datetime`.
+
+            Observe that `pandas.to_datetime` could raise an `OutOfBoundsDatetime` error
+            when the datetime is out of bounds. In this case, the function switches to
+            a 'slow' mode where it first converts the column to string type and divides 
+            it into two parts: 
+                - the part that could be casted to datetime using the `pandas.to_datetime`.
+                - the part that could not be casted, and should be parsed using the `dateutil.parser`.
+            This approach is slower than the default one, but can handle out of bounds datetimes.
+
+            Finally, the function fills the null values with the default value, if set.
+
+            If the `null_default_value` is set, the function fills the null values
+            with the default value.
+
+            Parameters:
+                series: `pandas` series to be parsed.
+                mode: mode to be used when parsing the datetime column.
+                    By default, the mode is set to `PandasParsingModes.RAISE`.
+
+            Returns:
+                `pandas` series parsed.
+
+            Raises:
+                `ColumnParserPandasDatetimeError`: error parsing the datetime column.
+        """
 
         _series: PandasSeries
         _series_nulls = series.isnull()
@@ -291,7 +497,7 @@ class DatetimeColumn(Column):
 
         logger.debug("update null values")
         if _series_nulls.sum() > 0 and self.null_default_value is not None:
-            logger.info("no null values")
+            logger.info("fill nulls")
 
             if (
                     self.null_default_value >= pd.Timestamp.min
