@@ -1,4 +1,5 @@
 from . import connector
+from .core import column
 from .connector.db import query
 from .connector.db.query import Query
 from .connector.db.hamana import connect, disconnect, execute

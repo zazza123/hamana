@@ -7,3 +7,17 @@ class HamanaException(Exception):
 
     def __str__(self):
         return self.description
+
+class ColumnParserPandasNumberError(HamanaException):
+    """
+        Exception raised when there is an error parsing a number column
+    """
+    def __init__(self, description):
+        super().__init__(description)
+
+class ColumnParserPandasDatetimeError(HamanaException):
+    """
+        Exception raised when there is an error parsing a datetime column
+    """
+    def __init__(self, description):
+        super().__init__(description)
