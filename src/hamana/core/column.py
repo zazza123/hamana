@@ -157,8 +157,11 @@ class Column:
     parser: ColumnParser | None
     """Parser object for the column."""
 
-    infered: bool = False
-    """Flag to indicate if the column was infered."""
+    order: int | None = None
+    """Numerical order of the column."""
+
+    inferred: bool = False
+    """Flag to indicate if the column was inferred."""
 
 class NumberColumn(Column):
     """

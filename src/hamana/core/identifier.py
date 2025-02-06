@@ -123,34 +123,34 @@ class ColumnIdentifier(Generic[TColumn]):
         logger.debug("start")
 
         # infer datetime column
-        infered_column = datetime_identifier(series, column_name, *args, **kwargs)
-        if infered_column is not None:
-            logger.info(f"datetime column inferred, format: {infered_column.format}")
-            return infered_column
+        inferred_column = datetime_identifier(series, column_name, *args, **kwargs)
+        if inferred_column is not None:
+            logger.info(f"datetime column inferred, format: {inferred_column.format}")
+            return inferred_column
 
         # infer boolean column
-        infered_column = boolean_identifier(series, column_name, *args, **kwargs)
-        if infered_column is not None:
-            logger.info(f"boolean column inferred, true value: {infered_column.true_value}, false value: {infered_column.false_value}")
-            return infered_column
+        inferred_column = boolean_identifier(series, column_name, *args, **kwargs)
+        if inferred_column is not None:
+            logger.info(f"boolean column inferred, true value: {inferred_column.true_value}, false value: {inferred_column.false_value}")
+            return inferred_column
 
         # infer integer column
-        infered_column = integer_identifier(series, column_name, *args, **kwargs)
-        if infered_column is not None:
-            logger.info(f"integer column inferred, decimal separator: {infered_column.decimal_separator}, thousands separator: {infered_column.thousands_separator}")
-            return infered_column
+        inferred_column = integer_identifier(series, column_name, *args, **kwargs)
+        if inferred_column is not None:
+            logger.info(f"integer column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
+            return inferred_column
 
         # infer number column
-        infered_column = number_identifier(series, column_name, *args, **kwargs)
-        if infered_column is not None:
-            logger.info(f"number column inferred, decimal separator: {infered_column.decimal_separator}, thousands separator: {infered_column.thousands_separator}")
-            return infered_column
+        inferred_column = number_identifier(series, column_name, *args, **kwargs)
+        if inferred_column is not None:
+            logger.info(f"number column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
+            return inferred_column
 
         # infer string column
-        infered_column = string_identifier(series, column_name, *args, **kwargs)
-        if infered_column is not None:
+        inferred_column = string_identifier(series, column_name, *args, **kwargs)
+        if inferred_column is not None:
             logger.info("string column inferred")
-            return infered_column
+            return inferred_column
 
         raise ColumnIdentifierError("no column inferred")
 
@@ -207,14 +207,14 @@ def _default_numeric_pandas(series: PandasSeries, column_name: str) -> NumberCol
     ):
         logger.info("possible number column: dot decimal separator, comma thousands separator")
         column = NumberColumn(name = column_name, decimal_separator = ".", thousands_separator = ",")
-        column.infered = True
+        column.inferred = True
     elif (
             comma_separator_count in [0, 1]
         and _series.str.match(r"^[+-]?(\d+(\.\d{3})*|\d{1,2})(\,\d+)?([eE][+-]?\d+)?$").all()
     ):
         logger.info("possible number column: comma decimal separator, dot thousands separator")
         column = NumberColumn(name = column_name, decimal_separator = ",", thousands_separator = ".")
-        column.infered = True
+        column.inferred = True
     else:
         logger.warning("no separator found")
 
@@ -260,8 +260,8 @@ def _default_integer_pandas(series: PandasSeries, column_name: str) -> IntegerCo
     logger.debug(f"dropped null values: {len(series) - len(_series)}")
 
     # check number column
-    infered_column = number_identifier.pandas(series, column_name)
-    if infered_column is None:
+    inferred_column = number_identifier.pandas(series, column_name)
+    if inferred_column is None:
         logger.warning("no number column found")
         return None
     logger.debug("number column inferred")
@@ -283,8 +283,8 @@ def _default_integer_pandas(series: PandasSeries, column_name: str) -> IntegerCo
     int_regex = rf"^[+-]?(\d+(\{separator}" + r"\d{3})*|\d{1,2})$"
     if separator is not None and _series.str.match(int_regex).all():
         logger.info("integer column found")
-        column = IntegerColumn(name = infered_column.name, decimal_separator = "", thousands_separator = separator)
-        column.infered = True
+        column = IntegerColumn(name = inferred_column.name, decimal_separator = "", thousands_separator = separator)
+        column.inferred = True
     else:
         logger.warning("no integer column found")
 
@@ -333,7 +333,7 @@ def _default_string_pandas(series: PandasSeries, column_name: str) -> StringColu
     if _series.astype("str").str.match(r"^[A-Za-z\d\W]+$").any():
         logger.info("string column found")
         column = StringColumn(name = column_name)
-        column.infered = True
+        column.inferred = True
     else:
         logger.warning("no string column found")
 
@@ -385,7 +385,7 @@ def _default_boolean_pandas(series: PandasSeries, column_name: str) -> BooleanCo
         values = _series.unique()
         logger.info(f"boolean column found, unique values: {values}")
         column = BooleanColumn(name = column_name, true_value = values[0], false_value = values[1])
-        column.infered = True
+        column.inferred = True
     else:
         logger.warning(f"no boolean column, unique values: {count_disinct}")
 
@@ -472,7 +472,7 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, format: str
             if pd.to_datetime(_series, errors = "coerce", format = _format).notnull().all():
                 logger.info(f"format '{_format}' used, datetime column found")
                 column = DatetimeColumn(name = column_name, format = _format)
-                column.infered = True
+                column.inferred = True
                 return column
         except Exception:
             logger.warning(f"format '{_format}' not recognized")
@@ -483,7 +483,7 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, format: str
         if pd.to_datetime(_series, errors = "coerce", format = "mixed").notnull().all():
             logger.info("datetime column found without format")
             column = DatetimeColumn(name = column_name)
-            column.infered = True
+            column.inferred = True
             return column
     except Exception:
         logger.warning("no datetime column found")
