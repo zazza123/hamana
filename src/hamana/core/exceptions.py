@@ -21,3 +21,17 @@ class ColumnParserPandasDatetimeError(HamanaException):
     """
     def __init__(self, description):
         super().__init__(description)
+
+class ColumnIdentifierError(HamanaException):
+    """
+        Exception raised when there is an error identifying a column.
+    """
+    def __init__(self, description):
+        super().__init__(description)
+
+class ColumnIdentifierEmptySeriesError(HamanaException):
+    """
+        Exception raised when a series is empty.
+    """
+    def __init__(self, description):
+        super().__init__(description)

@@ -15,5 +15,7 @@ __all__ = [
     "connector",
     # query
     "query",
-    "Query"
+    "Query",
+    # column
+    "column",
 ]

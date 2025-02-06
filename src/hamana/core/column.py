@@ -136,11 +136,6 @@ class ColumnParser:
     polars: Callable | None = None
 
 @dataclass
-class ColumnIdentifier:
-    pandas: Callable[[PandasSeries], bool]
-    polars: Callable | None = None
-
-@dataclass
 class Column:
     """
         Class representing a column in the `hamana` library.
@@ -148,7 +143,7 @@ class Column:
         To define a column, the following attributes are required:
             - `name`: name of the column.
             - `dtype`: represents the datatype and should be an instance of `DataType`.
-            - `parser`: a column in `hamana`could have an associated `parser` object 
+            - `parser`: a column in `hamana` could have an associated `parser` object 
                 that could be used to parse list of values; e.g. useful when data are 
                 extracted from different data sources and should be casted  and normalized.
     """
@@ -161,6 +156,9 @@ class Column:
 
     parser: ColumnParser | None
     """Parser object for the column."""
+
+    infered: bool = False
+    """Flag to indicate if the column was infered."""
 
 class NumberColumn(Column):
     """
@@ -368,6 +366,12 @@ class BooleanColumn(Column):
         the boolean column using `pandas`.
     """
 
+    true_value: str
+    """Value to be used to represent the `True` value."""
+
+    false_value: str
+    """Value to be used to represent the `False` value."""
+
     def __init__(self,
         name: str,
         true_value: str = "Y",
@@ -424,6 +428,12 @@ class DatetimeColumn(Column):
         the datetime column using `pandas`.
     """
 
+    format: str
+    """Format to be used to parse the datetime."""
+
+    null_default_value: datetime | pd.Timestamp | None
+    """Default value to be used when a null value is found."""
+
     def __init__(self,
         name: str,
         format: str = "%Y-%m-%d %H:%M:%S",
@@ -445,7 +455,7 @@ class DatetimeColumn(Column):
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
-        super().__init__(name, DataType.BOOLEAN, parser)
+        super().__init__(name, DataType.DATETIME, parser)
 
         return
 
