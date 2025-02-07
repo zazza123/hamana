@@ -19,10 +19,21 @@ def test_identifier_is_empty_error():
         hm.core.identifier.ColumnIdentifier.is_empty(data, raise_error = True)
 
 # Number Identifier
-def test_number_identifier_not_valid():
+def test_number_identifier_not_valid_signs():
     """Test number identifier with not valid data."""
 
     not_admissible = ["a", " ", "@", "++", "ee", "....", ",,.,", "'''", "999.999.", "999,999.9,1"]
+    for sign in not_admissible:
+        series = pd.Series([sign])
+        assert hm.core.number_identifier(series, "test") is None
+
+def test_number_identifier_not_valid_data():
+    """Test number identifier with not valid data."""
+
+    not_admissible = [
+        ["1,0", 1.0, "1239,0", "0,0"],          # mixed types (no separator + non standard)
+        ["1.000,0", 1000.0, "1.239,0", 0.0],    # mixed types (with separator + non standard)
+    ]
     for sign in not_admissible:
         series = pd.Series([sign])
         assert hm.core.number_identifier(series, "test") is None
@@ -36,8 +47,8 @@ def test_number_identifier_valid():
         ["1.0", 1.0, "1239.0", "0.0"],          # floats (no separator)
         ["1,000.0", 1000.0, "1,239.0", 0.0],    # floats (with separator)
         ["1.0e3", 1000.0, "1.239e3", 0.0],      # floats (scientific notation)
-        ["1,0", 1.0, "1239,0", "0,0"],          # floats (no separator + non standard)
-        ["1.000,0", 1000.0, "1.239,0", 0.0],    # floats (with separator + non standard)
+        ["1,0", "1,0e3", "1239,0", "0,0"],      # floats (no separator + non standard)
+        ["1.000,0", "1.239,0"],                 # floats (with separator + non standard)
     ]
 
     for sign in admissible:
@@ -150,7 +161,7 @@ def test_datetime_identifier_infer():
     ]
 
     series = pd.Series(data)
-    column = hm.core.datetime_identifier(series, "test")
+    column = hm.core.datetime_identifier(series, "test", format = "mixed")
 
     assert isinstance(column, hm.column.DatetimeColumn)
 
@@ -158,16 +169,16 @@ def test_datetime_identifier_invalid_data():
     """Test datetime identifier with invalid data."""
 
     data = [
-        "2023-12-31 23:58:10",
-        "hello world",
-        None,
-        "2023/03/12 08:10"
+        ["2023-12-31 23:58:10", "hello world", None, "2023/03/12 08:10"],
+        [1, 2, 3, 4],
+        [1.2, 10.34, -1.4]
     ]
 
-    series = pd.Series(data)
-    column = hm.core.datetime_identifier(series, "test")
+    for dt_data in data:
+        series = pd.Series(dt_data)
+        column = hm.core.datetime_identifier(series, "test")
 
-    assert column is None
+        assert column is None
 
 # Infer Column
 def test_identifier_infer_column():
@@ -178,7 +189,7 @@ def test_identifier_infer_column():
         { "type": hm.column.DataType.INTEGER, "data": ["1300", "-1", "23"]},
         { "type": hm.column.DataType.STRING, "data": [1, 1.0, "a", " ", "@", "++", "ee", "....", ",,.,", "'''", "999.999.", "999,999.91"]},
         { "type": hm.column.DataType.BOOLEAN, "data": [None, "Y", "N", "Y", "Y"]},
-        { "type": hm.column.DataType.DATETIME, "data": ["2023-12-31 23:58:10", "2023-03-12 08:10:00", None, "2023/03/12 08:10"]}
+        { "type": hm.column.DataType.DATETIME, "data": ["2023-12-31 23:58:10", "2023-03-12 08:10:00", None, "2023-03-12 08:10:00"]}
     ]
 
     for dt_data in data:

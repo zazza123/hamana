@@ -184,7 +184,7 @@ def _default_numeric_pandas(series: PandasSeries, column_name: str) -> NumberCol
     column = None
 
     # drop null values
-    _series = series.replace("", None).dropna()
+    _series = series.replace("", None).dropna().astype("str")
     logger.debug(f"dropped null values: {len(series) - len(_series)}")
     ColumnIdentifier.is_empty(_series, raise_error = True)
 
@@ -256,7 +256,7 @@ def _default_integer_pandas(series: PandasSeries, column_name: str) -> IntegerCo
     column = None
 
     # drop null values
-    _series = series.replace("", None).dropna()
+    _series = series.replace("", None).dropna().astype("str")
     logger.debug(f"dropped null values: {len(series) - len(_series)}")
 
     # check number column
@@ -443,7 +443,7 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, format: str
     column = None
 
     # drop null values
-    _series = series.replace("", None).dropna()
+    _series = series.replace("", None).dropna().astype("str")
     logger.debug(f"dropped null values: {len(series) - len(_series)}")
     ColumnIdentifier.is_empty(_series, raise_error = True)
 
@@ -476,17 +476,7 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, format: str
                 return column
         except Exception:
             logger.warning(f"format '{_format}' not recognized")
-
-    # check no format
-    logger.debug("check datetime without format")
-    try:
-        if pd.to_datetime(_series, errors = "coerce", format = "mixed").notnull().all():
-            logger.info("datetime column found without format")
-            column = DatetimeColumn(name = column_name)
-            column.inferred = True
-            return column
-    except Exception:
-        logger.warning("no datetime column found")
+            logger.warning("no datetime column found")
 
     logger.debug("end")
     return None
