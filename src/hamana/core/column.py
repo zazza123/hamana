@@ -154,7 +154,7 @@ class Column:
     dtype: DataType
     """Data type of the column."""
 
-    parser: ColumnParser | None
+    parser: ColumnParser | None = None
     """Parser object for the column."""
 
     order: int | None = None
@@ -162,6 +162,11 @@ class Column:
 
     inferred: bool = False
     """Flag to indicate if the column was inferred."""
+
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, Column):
+            return (self.order, self.name, self.dtype) == (value.order, value.name, value.dtype)
+        return NotImplemented
 
 class NumberColumn(Column):
     """
@@ -195,7 +200,8 @@ class NumberColumn(Column):
         decimal_separator: str = ".",
         thousands_separator: str = ",",
         null_default_value: int | float | None = None,
-        parser: ColumnParser | None = None
+        parser: ColumnParser | None = None,
+        order: int | None = None
     ):
         # set the attributes
         self.decimal_separator = decimal_separator
@@ -213,7 +219,7 @@ class NumberColumn(Column):
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
-        super().__init__(name, DataType.NUMBER, parser)
+        super().__init__(name, DataType.NUMBER, parser, order)
 
         return
 
@@ -273,11 +279,12 @@ class IntegerColumn(NumberColumn):
         decimal_separator: str = ".",
         thousands_separator: str = ",",
         null_default_value: int | None = 0,
-        parser: ColumnParser | None = None
+        parser: ColumnParser | None = None,
+        order: int | None = None
     ):
 
         # call the parent class constructor
-        super().__init__(name, decimal_separator, thousands_separator, null_default_value, parser)
+        super().__init__(name, decimal_separator, thousands_separator, null_default_value, parser, order)
 
         # override types
         self.dtype = DataType.INTEGER
@@ -325,7 +332,12 @@ class StringColumn(Column):
         Class representing `DataType.STRING` columns.
     """
 
-    def __init__(self, name: str, parser: ColumnParser | None = None):
+    def __init__(
+        self,
+        name: str,
+        parser: ColumnParser | None = None,
+        order: int | None = None
+    ):
 
         self.parser: ColumnParser # type: ignore
 
@@ -335,7 +347,7 @@ class StringColumn(Column):
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
-        super().__init__(name, DataType.STRING, parser)
+        super().__init__(name, DataType.STRING, parser, order)
 
         return
 
@@ -379,7 +391,8 @@ class BooleanColumn(Column):
         name: str,
         true_value: str = "Y",
         false_value: str = "N",
-        parser: ColumnParser | None = None
+        parser: ColumnParser | None = None,
+        order: int | None = None
     ) -> None:
         
         # set attributes
@@ -396,7 +409,7 @@ class BooleanColumn(Column):
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
-        super().__init__(name, DataType.BOOLEAN, parser)
+        super().__init__(name, DataType.BOOLEAN, parser, order)
 
         return
 
@@ -441,7 +454,8 @@ class DatetimeColumn(Column):
         name: str,
         format: str = "%Y-%m-%d %H:%M:%S",
         null_default_value: datetime | pd.Timestamp | None = None,
-        parser: ColumnParser | None = None
+        parser: ColumnParser | None = None,
+        order: int | None = None
     ) -> None:
         
         # set attributes
@@ -458,7 +472,7 @@ class DatetimeColumn(Column):
             parser = ColumnParser(pandas = self.pandas_default_parser)
 
         # call the parent class constructor
-        super().__init__(name, DataType.DATETIME, parser)
+        super().__init__(name, DataType.DATETIME, parser, order)
 
         return
 
