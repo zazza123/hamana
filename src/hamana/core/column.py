@@ -381,16 +381,16 @@ class BooleanColumn(Column):
         the boolean column using `pandas`.
     """
 
-    true_value: str
+    true_value: str | int | float
     """Value to be used to represent the `True` value."""
 
-    false_value: str
+    false_value: str | int | float
     """Value to be used to represent the `False` value."""
 
     def __init__(self,
         name: str,
-        true_value: str = "Y",
-        false_value: str = "N",
+        true_value: str | int | float = "Y",
+        false_value: str | int | float = "N",
         parser: ColumnParser | None = None,
         order: int | None = None
     ) -> None:
@@ -427,7 +427,7 @@ class BooleanColumn(Column):
             Returns:
                 `pandas` series parsed.
         """
-        return series.astype("str").map({self.true_value: True, self.false_value: False})
+        return series.map({self.true_value: True, self.false_value: False})
 
 class DatetimeColumn(Column):
     """
@@ -510,7 +510,9 @@ class DatetimeColumn(Column):
         _series_nulls = series.isnull()
 
         try:
-            _series = pd.to_datetime(series, errors = mode.value, format = self.format) # type: ignore (pandas issue in typing)
+            _series = pd.Series(pd.NaT, index = series.index)
+            _series_dt = pd.to_datetime(series.dropna().astype("str"), errors = mode.value, format = self.format) # type: ignore (pandas issue in typing)
+            _series.loc[_series_dt.index] = _series_dt
         except OutOfBoundsDatetime as e:
             logger.warning("[WARNING] switched to 'slow' mode due to out of bounds datetimes")
             logger.debug(f"[WARNING] parsing datetime: {e}")
