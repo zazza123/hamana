@@ -274,16 +274,19 @@ def _default_integer_pandas(series: PandasSeries, column_name: str) -> IntegerCo
     logger.debug(f"dot separator count: {dot_separator_count}")
 
     # infer thousands separator
-    separator = None
-    if dot_separator_count in [0, 1] and comma_separator_count == 0:
-        separator = "."
-    elif comma_separator_count in [0, 1] and dot_separator_count == 0:
-        separator = ","
+    thousands_separator = None
+    decimal_separator: str = ""
+    if dot_separator_count >= 0 and comma_separator_count == 0:
+        thousands_separator = "."
+        decimal_separator   = ","
+    elif comma_separator_count >= 0 and dot_separator_count == 0:
+        thousands_separator = ","
+        decimal_separator   = "."
 
-    int_regex = rf"^[+-]?(\d+(\{separator}" + r"\d{3})*|\d{1,2})$"
-    if separator is not None and _series.str.match(int_regex).all():
+    int_regex = rf"^[+-]?(\d+(\{thousands_separator}" + r"\d{3})*|\d{1,2})$"
+    if thousands_separator is not None and _series.str.match(int_regex).all():
         logger.info("integer column found")
-        column = IntegerColumn(name = inferred_column.name, decimal_separator = "", thousands_separator = separator)
+        column = IntegerColumn(name = inferred_column.name, decimal_separator = decimal_separator, thousands_separator = thousands_separator)
         column.inferred = True
     else:
         logger.warning("no integer column found")
@@ -381,7 +384,7 @@ def _default_boolean_pandas(series: PandasSeries, column_name: str) -> BooleanCo
     # check values
     logger.debug("check values")
     count_disinct = _series.nunique()
-    if count_disinct == 2:
+    if count_disinct == 2 and len(_series) > 2:
         values = _series.unique()
         logger.info(f"boolean column found, unique values: {values}")
         column = BooleanColumn(name = column_name, true_value = values[0], false_value = values[1])
