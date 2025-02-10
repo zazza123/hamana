@@ -94,12 +94,12 @@ def test_execute_query_without_meta(mocker: MockerFixture, mock_oracle_connectio
     assert df.c_timestamp.to_list() == [datetime(2021, 1, 1, 1, 1, 1)]
 
     # check dtype
-    assert query.columns[0].dtype == hm.query.ColumnDataType.INTEGER
-    assert query.columns[1].dtype == hm.query.ColumnDataType.NUMBER
-    assert query.columns[2].dtype == hm.query.ColumnDataType.TEXT
-    assert query.columns[3].dtype == hm.query.ColumnDataType.INTEGER
-    assert query.columns[4].dtype == hm.query.ColumnDataType.DATETIME
-    assert query.columns[5].dtype == hm.query.ColumnDataType.DATETIME
+    assert query.columns[0].dtype == hm.column.DataType.INTEGER
+    assert query.columns[1].dtype == hm.column.DataType.NUMBER
+    assert query.columns[2].dtype == hm.column.DataType.STRING
+    assert query.columns[3].dtype == hm.column.DataType.BOOLEAN
+    assert query.columns[4].dtype == hm.column.DataType.DATETIME
+    assert query.columns[5].dtype == hm.column.DataType.DATETIME
 
     return
 
@@ -123,12 +123,12 @@ def test_execute_query_with_meta(mocker: MockerFixture, mock_oracle_connection: 
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES WHERE ROWNUM <= 1",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(order = 4,name = "c_datetime",dtype = hm.query.ColumnDataType.DATETIME),
-            hm.query.QueryColumn(order = 5,name = "c_timestamp",dtype = hm.query.ColumnDataType.DATETIME)
+            hm.column.IntegerColumn(order = 1, name = "c_integer"),
+            hm.column.NumberColumn(order = 2, name = "c_number"),
+            hm.column.StringColumn(order = 3, name = "c_text"),
+            hm.column.BooleanColumn(order = 4, name = "c_boolean", true_value = 1, false_value = 0),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime"),
+            hm.column.DatetimeColumn(order = 6, name = "c_timestamp"),
         ]
     )
 
@@ -185,9 +185,9 @@ def test_execute_query_re_order_column(mocker: MockerFixture, mock_oracle_connec
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            hm.query.QueryColumn(order = 2, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 0, name = "c_text", dtype = hm.query.ColumnDataType.TEXT)
+            hm.column.Column(order = 2, name = "c_integer", dtype = hm.column.DataType.INTEGER),
+            hm.column.Column(order = 1, name = "c_number", dtype = hm.column.DataType.NUMBER),
+            hm.column.Column(order = 0, name = "c_text", dtype = hm.column.DataType.STRING)
         ]
     )
 
@@ -220,8 +220,8 @@ def test_execute_query_missing_column(mocker: MockerFixture, mock_oracle_connect
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_error")
+            hm.column.Column(order = 0, name = "c_integer", dtype = hm.column.DataType.INTEGER),
+            hm.column.Column(order = 1, name = "c_error", dtype = hm.column.DataType.STRING)
         ]
     )
 
@@ -403,12 +403,12 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on(mocker: MockerFixture, mo
     query_input = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(order = 4,name = "c_datetime",dtype = hm.query.ColumnDataType.DATETIME),
-            hm.query.QueryColumn(order = 5,name = "c_timestamp",dtype = hm.query.ColumnDataType.DATETIME)
+            hm.column.IntegerColumn(order = 1, name = "c_integer"),
+            hm.column.NumberColumn(order = 2, name = "c_number"),
+            hm.column.StringColumn(order = 3, name = "c_text"),
+            hm.column.BooleanColumn(order = 4, name = "c_boolean", true_value = 1, false_value = 0),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime"),
+            hm.column.DatetimeColumn(order = 6, name = "c_timestamp"),
         ]
     )
 

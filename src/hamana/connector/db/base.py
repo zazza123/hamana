@@ -4,9 +4,12 @@ from typing import Type, overload, Generator
 
 from pandas import DataFrame
 
+from ...core.identifier import ColumnIdentifier
+from ...core.column import BooleanColumn, StringColumn
+from ...core.exceptions import ColumnIdentifierError
 from .schema import SQLiteDataImportMode
 from .interface import DatabaseConnectorABC
-from .query import Query, QueryColumn, ColumnDataType
+from .query import Query
 from .exceptions import TableAlreadyExists
 
 # set logger
@@ -111,17 +114,16 @@ class BaseConnector(DatabaseConnectorABC):
             df_result = query.adjust_df(df_result)
         else:
             logger.debug("update query columns ...")
-            df_dtype = df_result.dtypes
             query_columns = []
 
             for i, column in enumerate(columns):
-                query_columns.append(
-                    QueryColumn(
-                        order = i,
-                        name = column,
-                        dtype = ColumnDataType.from_pandas(df_dtype[column].__str__())
-                    )
-                )
+                inferred_column = None
+                try:
+                    inferred_column = ColumnIdentifier.infer(df_result[column], column)
+                except ColumnIdentifierError:
+                    inferred_column = StringColumn(column)
+                inferred_column.order = i
+                query_columns.append(inferred_column)
 
             logger.info("query column updated")
             query.columns = query_columns
@@ -176,13 +178,13 @@ class BaseConnector(DatabaseConnectorABC):
                         logger.debug("update query columns ...")
                         query_columns = []
                         for i, column in enumerate(columns):
-                            query_columns.append(
-                                QueryColumn(
-                                    order = i,
-                                    name = column,
-                                    dtype = ColumnDataType.from_pandas(df_temp[column].dtype.name)
-                                )
-                            )
+                            inferred_column = None
+                            try:
+                                inferred_column = ColumnIdentifier.infer(df_temp[column], column)
+                            except ColumnIdentifierError:
+                                inferred_column = StringColumn(column)
+                            inferred_column.order = i
+                            query_columns.append(inferred_column)
 
                         query.columns = query_columns
                         logger.info("query column updated")
@@ -226,7 +228,7 @@ class BaseConnector(DatabaseConnectorABC):
             query = """SELECT COUNT(1) AS flag_exists FROM sqlite_master WHERE type = 'table' AND name = :table_name""",
             params = {"table_name": table_name_upper},
             columns = [
-                QueryColumn(order = 0, name = "flag_exists", dtype = ColumnDataType.BOOLEAN)
+                BooleanColumn(order = 0, name = "flag_exists", true_value = 1, false_value = 0)
             ]
         )
         hamana_db.execute(query_check_table)

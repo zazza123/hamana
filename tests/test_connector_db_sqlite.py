@@ -60,12 +60,12 @@ def test_execute_query_without_meta() -> None:
     assert df.c_timestamp.to_list() == [20210101.010101]
 
     # check dtype
-    assert query.columns[0].dtype == hm.query.ColumnDataType.INTEGER
-    assert query.columns[1].dtype == hm.query.ColumnDataType.NUMBER
-    assert query.columns[2].dtype == hm.query.ColumnDataType.TEXT
-    assert query.columns[3].dtype == hm.query.ColumnDataType.INTEGER
-    assert query.columns[4].dtype == hm.query.ColumnDataType.NUMBER
-    assert query.columns[5].dtype == hm.query.ColumnDataType.NUMBER
+    assert query.columns[0].dtype == hm.column.DataType.INTEGER
+    assert query.columns[1].dtype == hm.column.DataType.NUMBER
+    assert query.columns[2].dtype == hm.column.DataType.STRING
+    assert query.columns[3].dtype == hm.column.DataType.INTEGER
+    assert query.columns[4].dtype == hm.column.DataType.NUMBER
+    assert query.columns[5].dtype == hm.column.DataType.NUMBER
 
 
 def test_execute_query_with_meta() -> None:
@@ -86,26 +86,12 @@ def test_execute_query_with_meta() -> None:
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES WHERE c_integer = :row_id",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(
-                order = 4,
-                name = "c_datetime",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
-                )
-            ),
-            hm.query.QueryColumn(
-                order = 5,
-                name = "c_timestamp",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
-                )
-            )
+            hm.column.IntegerColumn(order = 0, name = "c_integer"),
+            hm.column.NumberColumn(order = 1, name = "c_number"),
+            hm.column.StringColumn(order = 2, name = "c_text"),
+            hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = 1, false_value = 0),
+            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y%m%d.0"),
+            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y%m%d.%H%M%S")
         ],
         params = [hm.query.QueryParam(name = "row_id", value = 1)]
     )
@@ -155,9 +141,9 @@ def test_execute_query_re_order_column() -> None:
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            hm.query.QueryColumn(order = 2, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 0, name = "c_text", dtype = hm.query.ColumnDataType.TEXT)
+            hm.column.IntegerColumn(order = 2, name = "c_integer"),
+            hm.column.NumberColumn(order = 1, name = "c_number"),
+            hm.column.StringColumn(order = 0, name = "c_text")
         ]
     )
 
@@ -186,8 +172,8 @@ def test_execute_query_missing_column() -> None:
     query = hm.Query(
         query = "SELECT * FROM T_DTYPES",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_error")
+            hm.column.IntegerColumn(order = 0, name = "c_integer"),
+            hm.column.IntegerColumn(order = 1, name = "c_error")
         ]
     )
 
@@ -354,26 +340,12 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     query_input = hm.Query(
         query = "SELECT * FROM T_DTYPES WHERE c_integer = 3",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(
-                order = 4,
-                name = "c_datetime",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x, format = "%Y%m%d")
-                )
-            ),
-            hm.query.QueryColumn(
-                order = 5,
-                name = "c_timestamp",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y%m%d.%H%M%S")
-                )
-            )
+            hm.column.IntegerColumn(order = 0, name = "c_integer"),
+            hm.column.NumberColumn(order = 1, name = "c_number"),
+            hm.column.StringColumn(order = 2, name = "c_text"),
+            hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = 1, false_value = 0),
+            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y%m%d.0"),
+            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y%m%d.%H%M%S")
         ]
     )
 

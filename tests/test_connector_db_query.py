@@ -10,9 +10,9 @@ from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResult
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
 columns = [
-    hm.query.QueryColumn(order = 1, name = "id"),
-    hm.query.QueryColumn(order = 2, name = "name"),
-    hm.query.QueryColumn(order = 3, name = "age")
+    hm.column.IntegerColumn(order = 1, name = "id"),
+    hm.column.StringColumn(order = 2, name = "name"),
+    hm.column.IntegerColumn(order = 3, name = "age")
 ]
 query = hm.Query(
     query = "SELECT * FROM users",
@@ -37,9 +37,9 @@ def test_get_create_query_success() -> None:
 
     expected_query = (
         "CREATE TABLE USERS (\n"
-        "    id TEXT\n"
+        "    id INTEGER\n"
         "  , name TEXT\n"
-        "  , age TEXT\n"
+        "  , age INTEGER\n"
         ")"
     )
     assert query.get_create_query("users") == expected_query
@@ -64,12 +64,12 @@ def test_to_sqlite_success() -> None:
     query = hm.Query(
         query = "SELECT * FROM T_QUERY_TO_SQLITE",
         columns = [
-            hm.query.QueryColumn(order = 1, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 2, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 3, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 4, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(order = 5, name = "c_datetime", dtype = hm.query.ColumnDataType.DATETIME),
-            hm.query.QueryColumn(order = 6, name = "c_timestamp", dtype = hm.query.ColumnDataType.DATETIME)
+            hm.column.IntegerColumn(order = 1, name = "c_integer"),
+            hm.column.NumberColumn(order = 2, name = "c_number"),
+            hm.column.StringColumn(order = 3, name = "c_text"),
+            hm.column.BooleanColumn(order = 4, name = "c_boolean"),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime"),
+            hm.column.DatetimeColumn(order = 6, name = "c_timestamp"),
         ]
     )
 
@@ -93,7 +93,7 @@ def test_to_sqlite_success() -> None:
     query_on_db = hm.execute("SELECT * FROM T_QUERY_TO_SQLITE")
 
     # check columns
-    query_on_db.columns = cast(list[hm.query.QueryColumn], query_on_db.columns)
+    query_on_db.columns = cast(list[hm.column.Column], query_on_db.columns)
     assert query_on_db.columns[0].name == "c_integer"
     assert query_on_db.columns[1].name == "c_number"
     assert query_on_db.columns[2].name == "c_text"
@@ -111,12 +111,12 @@ def test_to_sqlite_success() -> None:
     assert query_on_db.result.c_timestamp.to_list() == [20210101.010101]
 
     # check dtype
-    assert query_on_db.columns[0].dtype == hm.query.ColumnDataType.INTEGER
-    assert query_on_db.columns[1].dtype == hm.query.ColumnDataType.NUMBER
-    assert query_on_db.columns[2].dtype == hm.query.ColumnDataType.TEXT
-    assert query_on_db.columns[3].dtype == hm.query.ColumnDataType.INTEGER
-    assert query_on_db.columns[4].dtype == hm.query.ColumnDataType.NUMBER
-    assert query_on_db.columns[5].dtype == hm.query.ColumnDataType.NUMBER
+    assert query_on_db.columns[0].dtype == hm.column.DataType.INTEGER
+    assert query_on_db.columns[1].dtype == hm.column.DataType.NUMBER
+    assert query_on_db.columns[2].dtype == hm.column.DataType.STRING
+    assert query_on_db.columns[3].dtype == hm.column.DataType.INTEGER
+    assert query_on_db.columns[4].dtype == hm.column.DataType.NUMBER
+    assert query_on_db.columns[5].dtype == hm.column.DataType.NUMBER
 
     hm.disconnect()
     return

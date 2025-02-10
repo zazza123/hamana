@@ -8,7 +8,10 @@ from locale import getencoding
 
 import pandas as pd
 
-from ...connector.db.query import Query, QueryColumn, ColumnDataType
+from ...core.identifier import ColumnIdentifier
+from ...core.exceptions import ColumnIdentifierError
+from ...core.column import Column, BooleanColumn, StringColumn
+from ...connector.db.query import Query
 from ...connector.db.exceptions import TableAlreadyExists
 from ...connector.db.schema import SQLiteDataImportMode
 from .exceptions import CSVColumnNumberMismatchError, CSVDecodeRowError
@@ -55,7 +58,7 @@ class CSVConnector:
                 By default, the class will try to infer the columns directly from 
                 the file. If the header is not available, then by default, the 
                 names of the columns will be `column_1`, `column_2`, and so on. 
-                The data type of the columns will be infered automatically 
+                The data type of the columns will be inferred automatically 
                 by taking a sample of 1000 rows from the file, converted into a 
                 DataFrame, and using the data types from the DataFrame.
             encoding: Define the encoding to use during the reading process of the file.
@@ -78,7 +81,7 @@ class CSVConnector:
     has_header: bool
     """Flag to indicate if the CSV file has a header."""
 
-    columns: list[QueryColumn]
+    columns: list[Column]
     """List of columns in the CSV file."""
 
     def __init__(
@@ -86,7 +89,7 @@ class CSVConnector:
         file_path: str | Path,
         dialect: type[csv.Dialect] | None = None,
         has_header: bool | None = None,
-        columns: list[QueryColumn] | None = None,
+        columns: list[Column] | None = None,
         encoding: str = getencoding()
     ) -> None:
         logger.debug("start")
@@ -300,7 +303,7 @@ class CSVConnector:
             query = """SELECT COUNT(1) AS flag_exists FROM sqlite_master WHERE type = 'table' AND name = :table_name""",
             params = {"table_name": table_name_upper},
             columns = [
-                QueryColumn(order = 0, name = "flag_exists", dtype = ColumnDataType.BOOLEAN)
+                BooleanColumn(order = 0, name = "flag_exists", true_value = 1, false_value = 0)
             ]
         )
         hamana_db.execute(query_check_table)
@@ -437,7 +440,7 @@ class CSVConnector:
         logger.debug("end")
         return has_header
 
-    def _infer_columns(self) -> list[QueryColumn]:
+    def _infer_columns(self) -> list[Column]:
         """
             Infer the columns of the CSV file.
 
@@ -446,7 +449,7 @@ class CSVConnector:
             available, then by default, the names of the columns 
             will be `column_1`, `column_2`, and so on.
 
-            Te data type of the columns will be infered automatically 
+            Te data type of the columns will be inferred automatically 
             by taking a sample of 1000 rows from the file, converted 
             into a `DataFrame`, and using the data types from it.
 
@@ -455,35 +458,46 @@ class CSVConnector:
         """
         logger.debug("start")
 
-        columns = []
-
         # read first 1000 rows
-        df_check = pd.read_csv(
-            filepath_or_buffer = self.file_path,
-            dialect = self.dialect, # type: ignore
-            header = 0 if self.has_header else None,
-            nrows = 1_000
-        )
-
-        # read first row
+        csv_data = []
+        columns = []
         with open(self.file_path, "r", newline = "", encoding = self.encoding) as file:
             reader = csv.reader(file, dialect = self.dialect)
+
+            # get header
             header = next(reader)
 
+            # read rows
+            row_count = 1
+            try:
+                for row in reader:
+                    csv_data.append(row)
+                    row_count += 1
+                    if len(csv_data) >= 1_000:
+                        break
+            except UnicodeDecodeError as e:
+                err_msg = f"ERROR: parsing {row_count + 1} row."
+                logger.error(err_msg)
+                logger.exception(e)
+                raise CSVDecodeRowError(err_msg)
+
         # set columns
+        df_check = pd.DataFrame(csv_data)
         for i, column in enumerate(header):
-            columns.append(
-                QueryColumn(
-                    order = i,
-                    name = column if self.has_header else f"column_{i + 1}",
-                    dtype = ColumnDataType.from_pandas(df_check.iloc[:, i].dtype.name)
-                )
-            )
+            inferred_column = None
+            name = column if self.has_header else f"column_{i + 1}"
+
+            try:
+                inferred_column = ColumnIdentifier.infer(df_check[i], name)
+            except ColumnIdentifierError:
+                inferred_column = StringColumn(column)
+            inferred_column.order = i
+            columns.append(inferred_column)
 
         logger.debug("end")
         return columns
 
-    def _compare_columns(self, reference_columns: list[QueryColumn], target_columns: list[QueryColumn]) -> None:
+    def _compare_columns(self, reference_columns: list[Column], target_columns: list[Column]) -> None:
         """
             Compare two lists of columns.  
             This method compares two lists of columns and raises 

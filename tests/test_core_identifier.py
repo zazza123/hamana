@@ -72,9 +72,11 @@ def test_integer_identifier_valid():
     """Test integer identifier with valid data."""
 
     admissible = [
-        ["1000" , 1000, "-12", "0"], # integers (no separator)
+        ["1000" , 1000, "-12", "0", "12532346"], # integers (no separator)
         ["1,000"],                   # integers (with separator)
         ["1.000"],                   # integers (with separator)
+        ["12.532.346"],              # integers (with separator)
+        ["12,532,346"],              # integers (with separator)
     ]
 
     for sign in admissible:
@@ -107,7 +109,9 @@ def test_boolean_identifier_valid():
 
     admissible = [
         [None, "A", "B", "A", "B"],
-        [None, True, False, True, True]
+        [None, True, False, True, True],
+        [None, 1, 0, 1, 1],
+        [None, "Y", 1, "Y", "Y"],
     ]
     for sign in admissible:
         series = pd.Series(sign)

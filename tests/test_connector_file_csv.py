@@ -70,12 +70,12 @@ def test_csv_columns_infer_with_header() -> None:
     """
     csv_file = hm.connector.file.CSV("tests/data/file/csv_has_header_true.csv")
     assert len(csv_file.columns) == 6
-    assert csv_file.columns[0] == hm.query.QueryColumn(0, "c_integer", hm.query.ColumnDataType.INTEGER)
-    assert csv_file.columns[1] == hm.query.QueryColumn(1, "c_number", hm.query.ColumnDataType.NUMBER)
-    assert csv_file.columns[2] == hm.query.QueryColumn(2, "c_text", hm.query.ColumnDataType.TEXT)
-    assert csv_file.columns[3] == hm.query.QueryColumn(3, "c_boolean", hm.query.ColumnDataType.BOOLEAN)
-    assert csv_file.columns[4] == hm.query.QueryColumn(4, "c_datetime", hm.query.ColumnDataType.TEXT)
-    assert csv_file.columns[5] == hm.query.QueryColumn(5, "c_timestamp", hm.query.ColumnDataType.TEXT)
+    assert csv_file.columns[0] == hm.column.IntegerColumn(order = 0, name = "c_integer")
+    assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "c_number")
+    assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "c_text")
+    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "c_boolean")
+    assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "c_datetime")
+    assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "c_timestamp")
     return
 
 def test_csv_columns_infer_without_header() -> None:
@@ -84,12 +84,12 @@ def test_csv_columns_infer_without_header() -> None:
     """
     csv_file = hm.connector.file.CSV("tests/data/file/csv_has_header_false.csv")
     assert len(csv_file.columns) == 6
-    assert csv_file.columns[0] == hm.query.QueryColumn(0, "column_1", hm.query.ColumnDataType.INTEGER)
-    assert csv_file.columns[1] == hm.query.QueryColumn(1, "column_2", hm.query.ColumnDataType.NUMBER)
-    assert csv_file.columns[2] == hm.query.QueryColumn(2, "column_3", hm.query.ColumnDataType.TEXT)
-    assert csv_file.columns[3] == hm.query.QueryColumn(3, "column_4", hm.query.ColumnDataType.BOOLEAN)
-    assert csv_file.columns[4] == hm.query.QueryColumn(4, "column_5", hm.query.ColumnDataType.TEXT)
-    assert csv_file.columns[5] == hm.query.QueryColumn(5, "column_6", hm.query.ColumnDataType.TEXT)
+    assert csv_file.columns[0] == hm.column.IntegerColumn(order = 0, name = "column_1")
+    assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "column_2")
+    assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "column_3")
+    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "column_4")
+    assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "column_5")
+    assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "column_6")
     return
 
 def test_csv_columns_provided_number_mismatch() -> None:
@@ -98,7 +98,7 @@ def test_csv_columns_provided_number_mismatch() -> None:
         the actual columns in the file.
     """
     with pytest.raises(CSVColumnNumberMismatchError):
-        hm.connector.file.CSV("tests/data/file/csv_has_header_true.csv", columns = [hm.query.QueryColumn(0, "c_integer", hm.query.ColumnDataType.TEXT)])
+        hm.connector.file.CSV("tests/data/file/csv_has_header_true.csv", columns = [hm.column.StringColumn(order = 0, name = "c_integer")])
     return
 
 def test_execute_csv_with_header_without_meta() -> None:
@@ -130,8 +130,8 @@ def test_execute_csv_with_header_without_meta() -> None:
     assert first_row[1] == 1.1
     assert first_row[2] == "Hello"
     assert first_row[3]
-    assert first_row[4] == "2023-01-01"
-    assert first_row[5] == "2023-01-01 01:02:03"
+    assert first_row[4] == datetime(2023, 1, 1)
+    assert first_row[5] == datetime(2023, 1, 1, 1, 2, 3)
 
     return
 
@@ -141,12 +141,12 @@ def test_execute_csv_without_header_with_meta() -> None:
         the `columns` are not provided.
     """
     columns = [
-        hm.query.QueryColumn(0, "c_integer", hm.query.ColumnDataType.INTEGER),
-        hm.query.QueryColumn(1, "c_number", hm.query.ColumnDataType.NUMBER),
-        hm.query.QueryColumn(2, "c_text", hm.query.ColumnDataType.TEXT),
-        hm.query.QueryColumn(3, "c_boolean", hm.query.ColumnDataType.BOOLEAN),
-        hm.query.QueryColumn(4, "c_datetime", hm.query.ColumnDataType.DATETIME, hm.query.QueryColumnParser(to_datetime = lambda x: pd.to_datetime(x, format = "%Y-%m-%d"))),
-        hm.query.QueryColumn(5, "c_timestamp", hm.query.ColumnDataType.DATETIME, hm.query.QueryColumnParser(to_datetime = lambda x: pd.to_datetime(x, format = "%Y-%m-%d %H:%M:%S")))
+        hm.column.IntegerColumn(order = 0, name = "c_integer"),
+        hm.column.NumberColumn(order = 1, name = "c_number"),
+        hm.column.StringColumn(order = 2, name = "c_text"),
+        hm.column.BooleanColumn(order = 3, name = "c_boolean"),
+        hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y-%m-%d"),
+        hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y-%m-%d %H:%M:%S")
     ]
     csv_file = hm.connector.file.CSV("tests/data/file/csv_has_header_false.csv", columns = columns).execute()
 
@@ -214,8 +214,8 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     assert first_row[1] == 1.1
     assert first_row[2] == "Hello"
     assert first_row[3] == 1
-    assert first_row[4] == "2023-01-01"
-    assert first_row[5] == "2023-01-01 01:02:03"
+    assert first_row[4] == 20230101.0
+    assert first_row[5] == 20230101.010203
 
     hm.disconnect()
     return
@@ -320,26 +320,12 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     csv_file = hm.connector.file.CSV(
         file_path = "tests/data/file/csv_has_header_true.csv",
         columns = [
-            hm.query.QueryColumn(order = 0, name = "c_integer", dtype = hm.query.ColumnDataType.INTEGER),
-            hm.query.QueryColumn(order = 1, name = "c_number", dtype = hm.query.ColumnDataType.NUMBER),
-            hm.query.QueryColumn(order = 2, name = "c_text", dtype = hm.query.ColumnDataType.TEXT),
-            hm.query.QueryColumn(order = 3, name = "c_boolean", dtype = hm.query.ColumnDataType.BOOLEAN),
-            hm.query.QueryColumn(
-                order = 4,
-                name = "c_datetime",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x, format = "%Y-%m-%d")
-                )
-            ),
-            hm.query.QueryColumn(
-                order = 5,
-                name = "c_timestamp",
-                dtype = hm.query.ColumnDataType.DATETIME,
-                parser = hm.query.QueryColumnParser(
-                    to_datetime = lambda x: pd.to_datetime(x.astype("object"), format = "%Y-%m-%d %H:%M:%S")
-                )
-            )
+            hm.column.IntegerColumn(order = 0, name = "c_integer"),
+            hm.column.NumberColumn(order = 1, name = "c_number"),
+            hm.column.StringColumn(order = 2, name = "c_text"),
+            hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = "True", false_value = "False"),
+            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y-%m-%d"),
+            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y-%m-%d %H:%M:%S")
         ]
     )
 

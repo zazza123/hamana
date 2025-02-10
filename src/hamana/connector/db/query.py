@@ -1,11 +1,11 @@
 import logging
-from enum import Flag, auto
-from collections.abc import Callable
 
 import pandas as pd
+from typing import TypeVar, Generic
 from pydantic import BaseModel
 
-from .schema import SQLiteDataImportMode, BooleanMapper
+from ...core.column import Column, DataType
+from .schema import SQLiteDataImportMode
 from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable, ColumnDataTypeConversionError
 
 # set logging
@@ -13,193 +13,12 @@ logger = logging.getLogger(__name__)
 
 # param value custom type
 ParamValue = int | float | str | bool
-QueryColumnParserType = Callable[[pd.Series], pd.Series]
-
-class ColumnDataType(Flag):
-    """
-        Enumeration to represent the data types of the columns.
-    """
-
-    INTEGER = auto()
-    """Integer data type."""
-
-    NUMBER = auto()
-    """Number data type."""
-
-    TEXT = auto()
-    """String data type."""
-
-    BOOLEAN = auto()
-    """Boolean data type."""
-
-    DATETIME = auto()
-    """Datetime data type."""
-
-    @classmethod
-    def from_pandas(cls, dtype: str) -> "ColumnDataType":
-        """
-            Function to map a pandas data type to a ColumnDataType.
-
-            Parameters:
-                dtype: pandas data type.
-
-            Returns:
-                ColumnDataType mapped from the pandas data type.
-        """
-        if "int" in dtype:
-            return ColumnDataType.INTEGER
-        elif "float" in dtype:
-            return ColumnDataType.NUMBER
-        elif dtype == "object":
-            return ColumnDataType.TEXT
-        elif dtype == "bool":
-            return ColumnDataType.BOOLEAN
-        elif "datetime" in dtype:
-            return ColumnDataType.DATETIME
-        else:
-            logger.warning(f"unknown data type: {dtype}")
-            return ColumnDataType.TEXT
-
-    @classmethod
-    def to_sqlite(cls, dtype: "ColumnDataType") -> str:
-        """
-            Function to map a ColumnDataType to a SQLite data type.
-
-            Parameters:
-                dtype: ColumnDataType to be mapped.
-
-            Returns:
-                SQLite data type mapped from the ColumnDataType.
-        """
-        if dtype == ColumnDataType.INTEGER:
-            return "INTEGER"
-        elif dtype == ColumnDataType.NUMBER:
-            return "REAL"
-        elif dtype == ColumnDataType.TEXT:
-            return "TEXT"
-        elif dtype == ColumnDataType.BOOLEAN:
-            return "INTEGER"
-        elif dtype == ColumnDataType.DATETIME:
-            return "REAL"
-        else:
-            return ""
-
-class QueryColumnParser:
-    """
-        Class representing a parser used to convert a column to a specific data type.
-        A parser is used during a query execution; each column can have a specific parser.
-
-        It is composed by a function for every `ColumnDataType` type. 
-        Observe that each function must have a single parameter, which is a pandas Series, 
-        and must return a pandas Series. If no function is provided for a specific data type, 
-        then a default function is used.
-
-        Parameters:
-            to_int: function to convert a column of `ColumnDataType.INTEGER` type.
-                Default function converts the column to `int64` using the `astype` method.
-            to_number: function to convert a column of `ColumnDataType.NUMBER` type.
-                Default function converts the column to `float64` using the `astype` method.
-            to_text: function to convert a column of `ColumnDataType.TEXT` type.
-                Default function converts the column to `object` using the `astype` method.
-            to_boolean: function to convert a column of `ColumnDataType.BOOLEAN` type.
-                Default function converts the column to `bool` using the `astype` method.
-            to_datetime: function to convert a column of `ColumnDataType.DATETIME` type.
-                Default function converts the column to `datetime` using the `pd.to_datetime` method.
-            boolean_mapper: mapper used to convert boolean values.
-    """
-
-    def __init__(
-        self, 
-        to_int: QueryColumnParserType | None = None,
-        to_number: QueryColumnParserType | None = None,
-        to_text: QueryColumnParserType | None = None,
-        to_boolean: QueryColumnParserType | None = None,
-        to_datetime: QueryColumnParserType | None = None,
-        boolean_mapper: BooleanMapper | None = None
-    ) -> None:
-
-        self.boolean_mapper = BooleanMapper(
-            true = ["True", "true", "1", "Y", 1],
-            false = ["False", "false", "0", "N", 0]
-        ) if boolean_mapper is None else boolean_mapper
-        """Mapper used to convert boolean values."""
-
-        # set default parsers
-        self.to_int = to_int if to_int else lambda series: pd.to_numeric(series, errors = "coerce", downcast = "integer")
-        self.to_number = to_number if to_number else lambda series: pd.to_numeric(series, errors = "coerce")
-        self.to_text = to_text if to_text else lambda series: series.astype("object")
-        self.to_boolean = to_boolean if to_boolean else lambda series: series.map(self.boolean_mapper.to_pandas_map())
-        self.to_datetime = to_datetime if to_datetime else lambda series: pd.to_datetime(series)
-
-    def parse(self, series: pd.Series, dtype: ColumnDataType) -> pd.Series:
-        """
-            Function to parse a column to a specific data type.
-
-            Parameters:
-                series: pandas Series to be parsed.
-                dtype: data type to parse the column.
-
-            Returns:
-                pandas Series parsed to the specific data type.
-        """
-        match dtype:
-            case ColumnDataType.INTEGER:
-                series = self.to_int(series)
-            case ColumnDataType.NUMBER:
-                series = self.to_number(series)
-            case ColumnDataType.TEXT:
-                series = self.to_text(series)
-            case ColumnDataType.BOOLEAN:
-                series = self.to_boolean(series)
-            case ColumnDataType.DATETIME:
-                series = self.to_datetime(series)
-        return series
-
-class QueryColumn:
-    """
-        Class to represent a column returned by a query. 
-        A column is represented by its order, source and name.
-    """
-
-    def __init__(
-        self,
-        order: int,
-        name: str,
-        dtype: ColumnDataType = ColumnDataType.TEXT,
-        parser: QueryColumnParser = QueryColumnParser()
-    ) -> None:
-        self.order = order
-        self.name = name
-        self.dtype = dtype
-        self.parser = parser
-
-    order: int
-    """Order of the column in the query result."""
-
-    name: str
-    """Name of the column provided by the database result."""
-
-    dtype: ColumnDataType
-    """
-        Data type of the column.  
-        The data type is used to map the column to the application data.
-    """
-
-    parser: QueryColumnParser
-    """
-        Parser used to convert the column to a specific data type.
-        The parser is used during the query execution.
-    """
-
-    def __eq__(self, value: object) -> bool:
-        if isinstance(value, QueryColumn):
-            return (self.order, self.name, self.dtype) == (value.order, value.name, value.dtype)
-        return NotImplemented
+TColumn = TypeVar("TColumn", bound = Column, covariant = True)
 
 class QueryParam(BaseModel):
     """
         Class to represent a parameter used in a query.  
-        A paramter is represented by a name and its value.
+        A parameter is represented by a name and its value.
 
         Usually, parameters are used to define general query conditions 
         and are replaced by the actual values when the query is executed.
@@ -211,7 +30,7 @@ class QueryParam(BaseModel):
     value: ParamValue
     """Value of the parameter."""
 
-class Query:
+class Query(Generic[TColumn]):
     """
         Class to represent a query to be executed in the database.
     """
@@ -219,7 +38,7 @@ class Query:
     def __init__(
         self,
         query: str,
-        columns: list[QueryColumn] | None = None,
+        columns: list[TColumn] | None = None,
         params: list[QueryParam] | dict[str, ParamValue] | None = None
     ) -> None:
         self.query = query
@@ -235,7 +54,7 @@ class Query:
         The parameters are replaced by their values when the query is executed.
     """
 
-    columns: list[QueryColumn] | None = None
+    columns: list[TColumn] | None = None
     """
         Definition of the columns returned by the query. 
         The columns are used to map the query result to the application data.
@@ -306,13 +125,13 @@ class Query:
         if self.columns is not None:
             columns_dtypes = {}
             for column in self.columns:
-                columns_dtypes[column.name] = ColumnDataType.to_sqlite(column.dtype)
+                columns_dtypes[column.name] = DataType.to_sqlite(column.dtype)
 
                 # convert columns
                 match column.dtype:
-                    case ColumnDataType.BOOLEAN:
+                    case DataType.BOOLEAN:
                         df_insert[column.name] = df_insert[column.name].astype(int)
-                    case ColumnDataType.DATETIME:
+                    case DataType.DATETIME:
                         df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d.%H%M%S").astype(float)
 
         # import internal database
@@ -399,7 +218,7 @@ class Query:
         # build query
         table_name_upper = table_name.upper()
         query = "CREATE TABLE " + table_name_upper + " (\n" + \
-                "".rjust(4) + ", ".rjust(4).join([f"{column.name} {ColumnDataType.to_sqlite(column.dtype)}\n" for column in self.columns]) + \
+                "".rjust(4) + ", ".rjust(4).join([f"{column.name} {DataType.to_sqlite(column.dtype)}\n" for column in self.columns]) + \
                 ")"
         logger.info(f"query to create table {table_name_upper} created")
         logger.info(f"query: {query}")
@@ -450,7 +269,7 @@ class Query:
         columns_df = df.columns.to_list()
 
         logger.info("get query columns ordered")
-        for col in sorted(columns, key = lambda col : col.order):
+        for col in sorted(columns, key = lambda col: col.order if col.order is not None else 0):
             columns_query.append(col.name)
 
         # check columns_query is a subset of columns_df
@@ -472,7 +291,7 @@ class Query:
         for column in columns:
 
             dtype_query = column.dtype
-            dtype_df = ColumnDataType.from_pandas(dtypes_df[column.name].name)
+            dtype_df = DataType.from_pandas(dtypes_df[column.name].name)
             logger.debug(f"column: {column.name}")
             logger.debug(f"datatype (query): {dtype_query}")
             logger.debug(f"datatype (df): {dtype_df}")
@@ -480,7 +299,13 @@ class Query:
             if dtype_query != dtype_df:
                 try:
                     logger.info(f"different datatype for '{column.name}' column -> (query) {dtype_query} != (df) {dtype_df}")
-                    df[column.name] = column.parser.parse(df[column.name], dtype_query)
+
+                    if column.parser is None:
+                        logger.warning(f"no parser available for {column.name} (order: {column.order})")
+                        logger.warning("skip column")
+                        continue
+
+                    df[column.name] = column.parser.pandas(df[column.name])
                 except Exception as e:
                     logger.error("ERROR: on datatype change")
                     logger.error(e)
