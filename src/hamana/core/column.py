@@ -245,16 +245,19 @@ class NumberColumn(Column):
             Raises:
                 `ColumnParserPandasNumberError`: error parsing the number column.
         """
+
+        _series = pd.Series(pd.NA, index = series.index)
         try:
-            series = pd.to_numeric(series.str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
+            _series_number = pd.to_numeric(series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
+            _series.loc[_series_number.index] = _series_number
         except Exception as e:
             logger.error(f"error parsing number: {e}")
             raise ColumnParserPandasNumberError(f"error parsing number: {e}")
 
         if self.null_default_value is not None:
             logger.debug(f"fill nulls, default value: {self.null_default_value}")
-            return series.fillna(self.null_default_value)
-        return series
+            _series = _series.fillna(self.null_default_value)
+        return _series.astype("float")
 
 class IntegerColumn(NumberColumn):
     """
@@ -315,17 +318,19 @@ class IntegerColumn(NumberColumn):
                 `ColumnParserPandasNumberError`: error parsing the number column.
         """
 
+        _series = pd.Series(pd.NA, index = series.index)
         try:
-            series = pd.to_numeric(series.str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
+            _series_number = pd.to_numeric(series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
+            _series.loc[_series_number.index] = _series_number
         except Exception as e:
             logger.error(f"error parsing integer: {e}")
             raise ColumnParserPandasNumberError(f"error parsing integer: {e}")
 
         if self.null_default_value is not None:
             logger.debug(f"fill nulls, default value: {self.null_default_value}")
-            return series.fillna(self.null_default_value).astype("int")
+            return _series.fillna(self.null_default_value).astype("int")
 
-        return series.apply(np.floor)
+        return _series.astype("float").apply(np.floor)
 
 class StringColumn(Column):
     """
