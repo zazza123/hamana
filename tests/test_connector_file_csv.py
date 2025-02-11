@@ -92,13 +92,35 @@ def test_csv_columns_infer_without_header() -> None:
     assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "column_6")
     return
 
-def test_csv_columns_provided_number_mismatch() -> None:
+def test_csv_columns_provided_number_mismatch_no_header() -> None:
     """
         Test case for the CSV connector when the provided `columns` do not match 
         the actual columns in the file.
     """
     with pytest.raises(CSVColumnNumberMismatchError):
-        hm.connector.file.CSV("tests/data/file/csv_has_header_true.csv", columns = [hm.column.StringColumn(order = 0, name = "c_integer")])
+        hm.connector.file.CSV("tests/data/file/csv_has_header_false.csv", columns = [hm.column.StringColumn(order = 0, name = "c_integer")])
+    return
+
+def test_csv_column_provided_with_header() -> None:
+    """
+        Test case for a CSV file with header, where a column is provided.
+    """
+    csv_file = hm.connector.file.CSV(
+        file_path = "tests/data/file/csv_has_header_true.csv",
+        columns = [
+            hm.column.StringColumn(order = 0, name = "c_integer")
+        ]
+    )
+
+    
+    assert len(csv_file.columns) == 6
+    assert csv_file.columns[0] == hm.column.StringColumn(order = 0, name = "c_integer")
+    assert csv_file.columns[0].inferred == False
+    assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "c_number")
+    assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "c_text")
+    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "c_boolean")
+    assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "c_datetime")
+    assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "c_timestamp")
     return
 
 def test_execute_csv_with_header_without_meta() -> None:

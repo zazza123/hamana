@@ -129,13 +129,7 @@ class CSVConnector:
 
         # set columns
         infer_columns = self._infer_columns()
-        if columns is None:
-            logger.info("columns are not provided, trying to infer..")
-            self.columns = infer_columns
-        else:
-            # compare columns with inferred columns
-            self._compare_columns(columns, infer_columns)
-            self.columns = columns
+        self.columns = self._compute_columns(infer_columns, columns)
         logger.debug(f"columns: {[column.name for column in self.columns]}")
 
         logger.debug("end")
@@ -497,29 +491,53 @@ class CSVConnector:
         logger.debug("end")
         return columns
 
-    def _compare_columns(self, reference_columns: list[Column], target_columns: list[Column]) -> None:
+    def _compute_columns(self, inferred_columns: list[Column], input_columns: list[Column] | None) -> list[Column]:
         """
-            Compare two lists of columns.  
-            This method compares two lists of columns and raises 
-            an exception if the total number of columns do not match. 
+            Compare the 
 
             Note:
                 Add this method to include additional creteria 
                 to compare the columns.
 
             Parameters:
-                reference_columns: Reference columns.
-                target_columns: Target columns.
+                inferred_columns: Reference columns.
+                input_columns: Target columns.
 
             Raises:
-                CSVColumnNumberMismatchError: If the number of columns 
-                    in the reference and target lists do not match.
+                CSVColumnNumberMismatchError: If the number of the input 
+                    columns differs from the inferred ones and the 
+                    header is not provided.
         """
         logger.debug("start")
 
-        if len(reference_columns) != len(target_columns):
-            error_msg = f"Number of columns mismatch: provided ({len(reference_columns)}) != inferred ({len(target_columns)})"
-            raise CSVColumnNumberMismatchError(error_msg)
+        if input_columns is None:
+            logger.info("no columns provided, use inferred ones")
+            return inferred_columns
+
+        columns = []
+        if self.has_header:
+            logger.debug("header available, combine inferred with input columns.")
+
+            input_columns_map = {column.name: column for column in input_columns}
+            for column in inferred_columns:
+                if column.name in input_columns_map.keys():
+                    logger.info(f"'{column.name}', used input column, overwrite inferred.")
+                    columns.append(input_columns_map[column.name])
+
+                    # type mismatch
+                    if column.dtype != input_columns_map[column.name].dtype:
+                        logger.warning(f"datatype mismatch: (inferred) {column.dtype.name}, (input) {input_columns_map[column.name].dtype.name}")
+                else:
+                    logger.debug(f"'{column.name}', used inferred column")
+                    columns.append(column)
+        else:
+            logger.debug("header not available")
+
+            if len(inferred_columns) != len(input_columns):
+                error_msg = f"Number of columns mismatch: infered ({len(inferred_columns)}) != input ({len(input_columns)})"
+                raise CSVColumnNumberMismatchError(error_msg)
+
+            columns = input_columns
 
         logger.debug("end")
-        return
+        return columns
