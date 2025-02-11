@@ -108,7 +108,7 @@ def test_csv_column_provided_with_header() -> None:
     csv_file = hm.connector.file.CSV(
         file_path = "tests/data/file/csv_has_header_true.csv",
         columns = [
-            hm.column.StringColumn(order = 0, name = "c_integer")
+            hm.column.StringColumn(name = "c_integer")
         ]
     )
 

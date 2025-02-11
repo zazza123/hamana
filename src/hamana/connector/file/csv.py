@@ -493,15 +493,20 @@ class CSVConnector:
 
     def _compute_columns(self, inferred_columns: list[Column], input_columns: list[Column] | None) -> list[Column]:
         """
-            Compare the 
+            Compare the CSV file columns by combining the inferred 
+            columns with the input provided ones. Observe that the 
+            input columns have a higher priority than the inferred 
+            ones. Moreover, the order of the input columns will be 
+            overwritten if not aligned with the CSV order.
 
             Note:
-                Add this method to include additional creteria 
+                Overwrite this method to include additional creteria 
                 to compare the columns.
 
             Parameters:
-                inferred_columns: Reference columns.
-                input_columns: Target columns.
+                inferred_columns: columns derived by the library.
+                input_columns: provided externally. If None, the 
+                    process uses the inferred columns.
 
             Raises:
                 CSVColumnNumberMismatchError: If the number of the input 
@@ -522,11 +527,14 @@ class CSVConnector:
             for column in inferred_columns:
                 if column.name in input_columns_map.keys():
                     logger.info(f"'{column.name}', used input column, overwrite inferred.")
-                    columns.append(input_columns_map[column.name])
+
+                    input_column = input_columns_map[column.name]
+                    input_column.order = column.order
+                    columns.append(input_column)
 
                     # type mismatch
-                    if column.dtype != input_columns_map[column.name].dtype:
-                        logger.warning(f"datatype mismatch: (inferred) {column.dtype.name}, (input) {input_columns_map[column.name].dtype.name}")
+                    if column.dtype != input_column.dtype:
+                        logger.warning(f"datatype mismatch: (inferred) {column.dtype.name}, (input) {input_column.dtype.name}")
                 else:
                     logger.debug(f"'{column.name}', used inferred column")
                     columns.append(column)
