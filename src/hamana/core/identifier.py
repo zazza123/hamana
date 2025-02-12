@@ -109,6 +109,10 @@ class ColumnIdentifier(Generic[TColumn]):
 
             in order to infer the column type.
 
+            Note:
+                If the column is empty, then by default the 
+                function assign the STRING datatype.
+
             Parameters:
                 series: the series to infer the column type from.
                 *args: additional arguments to pass to the identifier.
@@ -122,35 +126,39 @@ class ColumnIdentifier(Generic[TColumn]):
         """
         logger.debug("start")
 
-        # infer datetime column
-        inferred_column = datetime_identifier(series, column_name, *args, **kwargs)
-        if inferred_column is not None:
-            logger.info(f"datetime column inferred, format: {inferred_column.format}")
-            return inferred_column
+        try:
+            # infer datetime column
+            inferred_column = datetime_identifier(series, column_name, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info(f"datetime column inferred, format: {inferred_column.format}")
+                return inferred_column
 
-        # infer boolean column
-        inferred_column = boolean_identifier(series, column_name, *args, **kwargs)
-        if inferred_column is not None:
-            logger.info(f"boolean column inferred, true value: {inferred_column.true_value}, false value: {inferred_column.false_value}")
-            return inferred_column
+            # infer boolean column
+            inferred_column = boolean_identifier(series, column_name, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info(f"boolean column inferred, true value: {inferred_column.true_value}, false value: {inferred_column.false_value}")
+                return inferred_column
 
-        # infer integer column
-        inferred_column = integer_identifier(series, column_name, *args, **kwargs)
-        if inferred_column is not None:
-            logger.info(f"integer column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
-            return inferred_column
+            # infer integer column
+            inferred_column = integer_identifier(series, column_name, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info(f"integer column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
+                return inferred_column
 
-        # infer number column
-        inferred_column = number_identifier(series, column_name, *args, **kwargs)
-        if inferred_column is not None:
-            logger.info(f"number column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
-            return inferred_column
+            # infer number column
+            inferred_column = number_identifier(series, column_name, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info(f"number column inferred, decimal separator: {inferred_column.decimal_separator}, thousands separator: {inferred_column.thousands_separator}")
+                return inferred_column
 
-        # infer string column
-        inferred_column = string_identifier(series, column_name, *args, **kwargs)
-        if inferred_column is not None:
-            logger.info("string column inferred")
-            return inferred_column
+            # infer string column
+            inferred_column = string_identifier(series, column_name, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info("string column inferred")
+                return inferred_column
+        except ColumnIdentifierEmptySeriesError:
+            logger.warning(f"column '{column_name}' empty, assigned STRING datatype.")
+            return StringColumn(name = column_name)
 
         raise ColumnIdentifierError("no column inferred")
 
