@@ -1,4 +1,4 @@
-
+from dataclasses import dataclass
 from datetime import datetime
 
 import pytest
@@ -11,6 +11,10 @@ from hamana.connector.db.schema import SQLiteDataImportMode
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, TableAlreadyExists
 
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
+
+@dataclass
+class DBType:
+    name:str
 
 @pytest.fixture
 def mock_oracle_connection(mocker: MockerFixture) -> MockerFixture:
@@ -34,12 +38,12 @@ def mock_oracle_connection(mocker: MockerFixture) -> MockerFixture:
 
     mock_connection.cursor.return_value = mock_cursor
     mock_cursor.description = [
-        ("c_integer", ),
-        ("c_number", ),
-        ("c_text", ),
-        ("c_boolean", ),
-        ("c_datetime", ),
-        ("c_timestamp", )
+        ("c_integer", DBType("DB_TYPE_NUMBER"), None, None, None, None, None),
+        ("c_number", DBType("DB_TYPE_NUMBER"), None, None, None, None, None),
+        ("c_text", DBType("DB_TYPE_VARCHAR"), None, None, None, None, None),
+        ("c_boolean", DBType("DB_TYPE_NUMBER"), None, None, None, None, None),
+        ("c_datetime", DBType("DB_TYPE_DATE"), None, None, None, None, None),
+        ("c_timestamp", DBType("DB_TYPE_DATE"), None, None, None, None, None)
     ]
 
     rows = [
@@ -94,10 +98,10 @@ def test_execute_query_without_meta(mocker: MockerFixture, mock_oracle_connectio
     assert df.c_timestamp.to_list() == [datetime(2021, 1, 1, 1, 1, 1)]
 
     # check dtype
-    assert query.columns[0].dtype == hm.column.DataType.INTEGER
+    assert query.columns[0].dtype == hm.column.DataType.NUMBER
     assert query.columns[1].dtype == hm.column.DataType.NUMBER
     assert query.columns[2].dtype == hm.column.DataType.STRING
-    assert query.columns[3].dtype == hm.column.DataType.BOOLEAN
+    assert query.columns[3].dtype == hm.column.DataType.NUMBER
     assert query.columns[4].dtype == hm.column.DataType.DATETIME
     assert query.columns[5].dtype == hm.column.DataType.DATETIME
 

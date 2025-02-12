@@ -5,12 +5,12 @@ from typing import Type, overload, Generator
 from pandas import DataFrame
 
 from ...core.identifier import ColumnIdentifier
-from ...core.column import BooleanColumn, StringColumn
 from ...core.exceptions import ColumnIdentifierError
-from .schema import SQLiteDataImportMode
-from .interface import DatabaseConnectorABC
+from ...core.column import Column, BooleanColumn, StringColumn
 from .query import Query
-from .exceptions import TableAlreadyExists
+from .schema import SQLiteDataImportMode
+from .interface import DatabaseConnectorABC, Cursor
+from .exceptions import TableAlreadyExists, ColumnDataTypeConversionError
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -47,6 +47,29 @@ class BaseConnector(DatabaseConnectorABC):
         logger.info("connection closed")
         logger.debug("end")
         return
+
+    def parse_cursor_description(self, cursor: Cursor) -> dict[str, Column | None]:
+        logger.debug("start")
+
+        columns = {}
+        for i, column in enumerate(cursor.description):
+
+            column_inferred: Column | None = None
+
+            column_name = column[0]
+            column_type = column[1]
+            logger.debug(f"column: {column_name}, type: {column_type}")
+
+            if column_type is not None:
+                try:
+                    column_inferred = self.get_column_from_dtype(column_type, column_name, i)
+                except ColumnDataTypeConversionError:
+                    logger.warning(f"column {column_name} has an unmapped data type: {column_type}")
+
+            columns[column_name] = column_inferred
+
+        logger.debug("end")
+        return columns
 
     def ping(self) -> None:
         logger.debug("start")
@@ -94,7 +117,7 @@ class BaseConnector(DatabaseConnectorABC):
                 logger.info(f"parameters: {query.get_params()}")
 
                 # set columns
-                columns = [desc[0] for desc in cursor.description]
+                columns = self.parse_cursor_description(cursor)
 
                 # fetch results
                 result = cursor.fetchall()
@@ -107,26 +130,29 @@ class BaseConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("convert to Dataframe")
-        df_result = DataFrame(result, columns = columns)
+        df_result = DataFrame(result, columns = [column_name for column_name in columns])
 
         # adjust columns
         if query.columns:
             df_result = query.adjust_df(df_result)
         else:
             logger.debug("update query columns ...")
-            query_columns = []
+            for i, column_name in enumerate(columns):
 
-            for i, column in enumerate(columns):
                 inferred_column = None
-                try:
-                    inferred_column = ColumnIdentifier.infer(df_result[column], column)
-                except ColumnIdentifierError:
-                    inferred_column = StringColumn(column)
-                inferred_column.order = i
-                query_columns.append(inferred_column)
+                if columns[column_name] is None:
+                    logger.debug(f"column {column_name} still not inferred, default infering")
+                    try:
+                        inferred_column = ColumnIdentifier.infer(df_result[column_name], column_name)
+                    except ColumnIdentifierError:
+                        logger.warning(f"column {column_name} could not be inferred, defualting to string")
+                        inferred_column = StringColumn(column_name)
+                    inferred_column.order = i
+
+                    columns[column_name] = inferred_column
 
             logger.info("query column updated")
-            query.columns = query_columns
+            query.columns = [columns[column_name] for column_name in columns]
 
         # set query result
         query.result = df_result
@@ -165,28 +191,34 @@ class BaseConnector(DatabaseConnectorABC):
                     # set columns
                     if query.columns is None:
                         """
-                            Observe that this operatin is executed only once 
+                            Observe that this operation is executed only once 
                             and only if the query object was not defined with columns.
                         """
                         logger.info("set query columns")
-                        columns = [desc[0] for desc in cursor.description]
+
+                        # get columns
+                        columns = self.parse_cursor_description(cursor)
 
                         # create temporary DataFrame
-                        df_temp = DataFrame(results, columns = columns)
+                        df_temp = DataFrame(results, columns = [column_name for column_name in columns])
 
                         # get columns
                         logger.debug("update query columns ...")
-                        query_columns = []
-                        for i, column in enumerate(columns):
-                            inferred_column = None
-                            try:
-                                inferred_column = ColumnIdentifier.infer(df_temp[column], column)
-                            except ColumnIdentifierError:
-                                inferred_column = StringColumn(column)
-                            inferred_column.order = i
-                            query_columns.append(inferred_column)
+                        for i, column_name in enumerate(columns):
 
-                        query.columns = query_columns
+                            inferred_column = None
+                            if columns[column_name] is None:
+                                logger.debug(f"column {column_name} still not inferred, default infering")
+                                try:
+                                    inferred_column = ColumnIdentifier.infer(df_temp[column_name], column_name)
+                                except ColumnIdentifierError:
+                                    logger.warning(f"column {column_name} could not be inferred, defualting to string")
+                                    inferred_column = StringColumn(column_name)
+                                inferred_column.order = i
+
+                                columns[column_name] = inferred_column
+
+                        query.columns = [columns[column_name] for column_name in columns]
                         logger.info("query column updated")
 
                     yield results

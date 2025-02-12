@@ -2,15 +2,61 @@ from __future__ import annotations
 from typing import Any, Generator, Protocol, TYPE_CHECKING
 from abc import ABCMeta, abstractmethod
 
+from ...core.column import Column
 from .schema import SQLiteDataImportMode
 
 if TYPE_CHECKING:
     from .query import Query
 
 """PEP 249 Standard Database API Specification v2.0"""
+class Cursor(Protocol):
+    """
+        The following abstract class defines a general database cursor.
+    """
+
+    @property
+    def description(self) -> tuple[tuple[str, Any, Any, Any, Any, Any, Any], ...]:
+        """
+            This read-only attribute is a sequence of 7-item sequences. 
+            Each of these sequences contains information describing one result column.
+
+            According to the PEP 249 Standard Database API Specification v2.0, the 7-item
+            sequence contains the following elements:
+
+            - `name`: the name of the column returned.
+            - `type_code`: the type of the column.
+            - `display_size`: the actual length of the column.
+            - `internal_size`: the size in bytes of the column.
+            - `precision`: the precision of the column.
+            - `scale`: the scale of the column.
+            - `null_ok`: whether the column can contain null values.
+
+            Observer, even if the PEP standard considers manadatory the 
+            `name` and `type_code` fields, in practise some database 
+            provides only the `name` field. All the other fields could
+            be `None`.
+        """
+        ...
+
+    def close(self) -> None:
+        """Function used to close the cursor."""
+        ...
+
+    def execute(self, *args: Any, **kwargs: Any) -> Any:
+        """Execute a database operation."""
+        ...
+
+    def fetchmany(self, size: int) -> Any:
+        """Fetch the next set of rows of a query result."""
+        ...
+
+    def fetchall(self) -> Any:
+        """Fetch all the rows of a query result."""
+        ...
+
 class ConnectionProtocol(Protocol):
     """
-        The following abtract class defines a general database connection.  
+        The following abstract class defines a general database connection.  
         A connection is used in order to connect to a database and perform operations on it.
     """
 
@@ -26,7 +72,7 @@ class ConnectionProtocol(Protocol):
         """Function used to rollback the transaction."""
         ...
 
-    def cursor(self) -> Any:
+    def cursor(self) -> Cursor:
         """Function used to create a cursor."""
         ...
 
@@ -69,6 +115,42 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
     @abstractmethod
     def ping(self) -> None:
         """Function used to check the database connection."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def parse_cursor_description(self, cursor: Cursor) -> dict[str, Column | None]:
+        """
+            The function is used to take a cursor object, 
+            parse its description, and extract a corresponding list 
+            of `Column` objects.
+
+            Parameters:
+                cursor: cursor to parse.
+
+            Returns:
+                dictionary containing the columns extracted from the cursor.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_column_from_dtype(self, dtype: Any, column_name: str, order: int) -> Column:
+        """
+            This function is designed to create a mapping between the 
+            datatypes provided by the different database connectors and 
+            standard `hamana` datatypes.
+
+            Parameters:
+                dtype: data type of the column.
+                column_name: name of the column.
+                order: order of the column.
+
+            Returns:
+                `Column` object representing the column.
+
+            Raises:
+                ColumnDataTypeConversionError: if the datatype 
+                    does not have a corresponding mapping.
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -152,6 +234,8 @@ class DatabaseConnectorABC(metaclass = ABCMeta):
             and hasattr(subclass, '__enter__') and callable(subclass.__enter__)
             and hasattr(subclass, '__exit__') and callable(subclass.__exit__)
             and hasattr(subclass, 'ping') and callable(subclass.ping)
+            and hasattr(subclass, 'parse_cursor_description') and callable(subclass.parse_cursor_description)
+            and hasattr(subclass, 'get_column_from_dtype') and callable(subclass.get_column_from_dtype)
             and hasattr(subclass, 'execute') and callable(subclass.execute)
             and hasattr(subclass, 'batch_execute') and callable(subclass.batch_execute)
             and hasattr(subclass, 'to_sqlite') and callable(subclass.to_sqlite)

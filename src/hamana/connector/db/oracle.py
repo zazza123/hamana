@@ -5,10 +5,11 @@ from typing import Any, Generator, overload
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
 
+from .query import Query
 from .base import BaseConnector
 from .schema import DatabaseConnectorConfig
-from .exceptions import DatabaseConnetionError
-from .query import Query
+from .exceptions import DatabaseConnetionError, ColumnDataTypeConversionError
+from ...core.column import Column, NumberColumn, StringColumn, DatetimeColumn
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -137,6 +138,24 @@ class OracleConnector(BaseConnector):
 
         logger.debug("end")
         return
+
+    def get_column_from_dtype(self, dtype: Any, column_name: str, order: int) -> Column:
+        logger.debug("start")
+
+        column = None
+        dtype_str = dtype.name
+        match dtype_str:
+            case "DB_TYPE_BINARY_DOUBLE " | "DB_TYPE_BINARY_FLOAT" | "DB_TYPE_BINARY_INTEGER" | "DB_TYPE_NUMBER":
+                column = NumberColumn(name = column_name, order = order)
+            case "DB_TYPE_CHAR" | "DB_TYPE_LONG" | "DB_TYPE_NCHAR" | "DB_TYPE_NVARCHAR" | "DB_TYPE_VARCHAR" | "DB_TYPE_ROWID" | "DB_TYPE_UROWID":
+                column = StringColumn(name = column_name, order = order)
+            case "DB_TYPE_DATE" | "DB_TYPE_TIMESTAMP" | "DB_TYPE_TIMESTAMP_LTZ" | "DB_TYPE_TIMESTAMP_TZ":
+                column = DatetimeColumn(name = column_name, order = order)
+            case _:
+                raise ColumnDataTypeConversionError(f"Data type {dtype} does not have a corresponding mapping.")
+
+        logger.debug("end")
+        return column
 
     @overload
     def execute(self, query: str) -> Query: ...
