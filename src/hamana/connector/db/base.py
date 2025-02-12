@@ -143,11 +143,10 @@ class BaseConnector(DatabaseConnectorABC):
                 if columns[column_name] is None:
                     logger.debug(f"column {column_name} still not inferred, default infering")
                     try:
-                        inferred_column = ColumnIdentifier.infer(df_result[column_name], column_name)
+                        inferred_column = ColumnIdentifier.infer(df_result[column_name], column_name, i)
                     except ColumnIdentifierError:
                         logger.warning(f"column {column_name} could not be inferred, defualting to string")
-                        inferred_column = StringColumn(column_name)
-                    inferred_column.order = i
+                        inferred_column = StringColumn(name = column_name, order = i)
 
                     columns[column_name] = inferred_column
 
@@ -210,11 +209,10 @@ class BaseConnector(DatabaseConnectorABC):
                             if columns[column_name] is None:
                                 logger.debug(f"column {column_name} still not inferred, default infering")
                                 try:
-                                    inferred_column = ColumnIdentifier.infer(df_temp[column_name], column_name)
+                                    inferred_column = ColumnIdentifier.infer(df_temp[column_name], column_name, i)
                                 except ColumnIdentifierError:
                                     logger.warning(f"column {column_name} could not be inferred, defualting to string")
-                                    inferred_column = StringColumn(column_name)
-                                inferred_column.order = i
+                                    inferred_column = StringColumn(name = column_name, order = i)
 
                                 columns[column_name] = inferred_column
 

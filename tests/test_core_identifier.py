@@ -115,7 +115,7 @@ def test_boolean_identifier_valid():
     ]
     for sign in admissible:
         series = pd.Series(sign)
-        assert isinstance(hm.core.boolean_identifier(series, "test", 3), hm.column.BooleanColumn)
+        assert isinstance(hm.core.boolean_identifier(series, "test", min_count = 3), hm.column.BooleanColumn)
 
 # Datetime Identifier
 def test_datetime_identifier_valid_default_format():

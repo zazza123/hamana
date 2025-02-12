@@ -482,10 +482,9 @@ class CSVConnector:
             name = column if self.has_header else f"column_{i + 1}"
 
             try:
-                inferred_column = ColumnIdentifier.infer(df_check[i], name)
+                inferred_column = ColumnIdentifier.infer(df_check[i], name, i)
             except ColumnIdentifierError:
-                inferred_column = StringColumn(column)
-            inferred_column.order = i
+                inferred_column = StringColumn(name = column, order = i)
             columns.append(inferred_column)
 
         logger.debug("end")
