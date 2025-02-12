@@ -365,7 +365,7 @@ string_identifier = ColumnIdentifier[StringColumn](pandas = _default_string_pand
 """
     Default Identifier for the `BooleanColumn` class.
 """
-def _default_boolean_pandas(series: PandasSeries, column_name: str) -> BooleanColumn | None:
+def _default_boolean_pandas(series: PandasSeries, column_name: str, min_count: int = 1_000) -> BooleanColumn | None:
     """
         This function defines the default behavior to identify a boolean column from a `pandas` series.
 
@@ -377,6 +377,8 @@ def _default_boolean_pandas(series: PandasSeries, column_name: str) -> BooleanCo
         Parameters:
             series: `pandas` series to be checked.
             column_name: name of the column to be checked.
+            min_count: minimum number of elements to consider the column as a boolean column.
+                This parameter is used to avoid wrong inferences when the column has only a few elements.
 
         Returns:
             `BooleanColumn` if the column is a boolean column, `None` otherwise.
@@ -392,7 +394,7 @@ def _default_boolean_pandas(series: PandasSeries, column_name: str) -> BooleanCo
     # check values
     logger.debug("check values")
     count_disinct = _series.nunique()
-    if count_disinct == 2 and len(_series) > 2:
+    if count_disinct == 2 and len(_series) > min_count:
         values = _series.unique()
         logger.info(f"boolean column found, unique values: {values}")
         column = BooleanColumn(name = column_name, true_value = values[0], false_value = values[1])

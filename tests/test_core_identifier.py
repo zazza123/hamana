@@ -115,7 +115,7 @@ def test_boolean_identifier_valid():
     ]
     for sign in admissible:
         series = pd.Series(sign)
-        assert isinstance(hm.core.boolean_identifier(series, "test"), hm.column.BooleanColumn)
+        assert isinstance(hm.core.boolean_identifier(series, "test", 3), hm.column.BooleanColumn)
 
 # Datetime Identifier
 def test_datetime_identifier_valid_default_format():
@@ -192,7 +192,7 @@ def test_identifier_infer_column():
         { "type": hm.column.DataType.NUMBER, "data": ["1", "1,000", "1.0", "1,000.0", "1.0e3"]},
         { "type": hm.column.DataType.INTEGER, "data": ["1300", "-1", "23"]},
         { "type": hm.column.DataType.STRING, "data": [1, 1.0, "a", " ", "@", "++", "ee", "....", ",,.,", "'''", "999.999.", "999,999.91"]},
-        { "type": hm.column.DataType.BOOLEAN, "data": [None, "Y", "N", "Y", "Y"]},
+        { "type": hm.column.DataType.STRING, "data": [None, "Y", "N", "Y", "Y"]},
         { "type": hm.column.DataType.DATETIME, "data": ["2023-12-31 23:58:10", "2023-03-12 08:10:00", None, "2023-03-12 08:10:00"]}
     ]
 

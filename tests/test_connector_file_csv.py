@@ -73,7 +73,7 @@ def test_csv_columns_infer_with_header() -> None:
     assert csv_file.columns[0] == hm.column.IntegerColumn(order = 0, name = "c_integer")
     assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "c_number")
     assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "c_text")
-    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "c_boolean")
+    assert csv_file.columns[3] == hm.column.StringColumn(order = 3, name = "c_boolean")
     assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "c_datetime")
     assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "c_timestamp")
     return
@@ -87,7 +87,7 @@ def test_csv_columns_infer_without_header() -> None:
     assert csv_file.columns[0] == hm.column.IntegerColumn(order = 0, name = "column_1")
     assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "column_2")
     assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "column_3")
-    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "column_4")
+    assert csv_file.columns[3] == hm.column.StringColumn(order = 3, name = "column_4")
     assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "column_5")
     assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "column_6")
     return
@@ -118,7 +118,7 @@ def test_csv_column_provided_with_header() -> None:
     assert csv_file.columns[0].inferred == False
     assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "c_number")
     assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "c_text")
-    assert csv_file.columns[3] == hm.column.BooleanColumn(order = 3, name = "c_boolean")
+    assert csv_file.columns[3] == hm.column.StringColumn(order = 3, name = "c_boolean")
     assert csv_file.columns[4] == hm.column.DatetimeColumn(order = 4, name = "c_datetime")
     assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "c_timestamp")
     return
@@ -235,7 +235,7 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     assert first_row[0] == 1
     assert first_row[1] == 1.1
     assert first_row[2] == "Hello"
-    assert first_row[3] == 1
+    assert first_row[3] == "True"
     assert first_row[4] == 20230101.0
     assert first_row[5] == 20230101.010203
 
