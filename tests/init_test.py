@@ -3,6 +3,7 @@ import sqlite3
 
 # constants
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
+SQL_FILE_PATH = "tests/data/file/"
 CSV_FILE_PATH = "tests/data/file/"
 
 # create dummy data
@@ -47,6 +48,31 @@ def create_sqlite_dtype_table(db_path: str) -> None:
     # close connection
     cursor.close()
     connection.close()
+    return
+
+def create_sql_query_file(file_path: str) -> None:
+    """
+        This function creates a SQL query file for testing.
+        The query is a simple SELECT * FROM T_DTYPES, 
+        where T_DTYPES is a table created by the function 
+        `create_sqlite_dtype_table`.
+
+        Parameters:
+            file_path: Path to the SQL query file.
+    """
+
+    # create SQL files
+    # FILE: t_dtypes_select.sql
+    file_name = "t_dtypes_select.sql"
+    sql_file_path = file_path + file_name
+    # remove the file if it exists
+    if os.path.exists(sql_file_path):
+        os.remove(sql_file_path)
+
+    # write the SQL query
+    with open(sql_file_path, "w") as file:
+        file.write("SELECT *\nFROM T_DTYPES")
+
     return
 
 def create_csv_test_files(csv_path: str) -> None:
@@ -110,6 +136,9 @@ if __name__ == "__main__":
     """
     # create database
     create_sqlite_dtype_table(DB_SQLITE_TEST_PATH)
+
+    # create SQL query file
+    create_sql_query_file(SQL_FILE_PATH)
 
     # create CSV files
     create_csv_test_files(CSV_FILE_PATH)

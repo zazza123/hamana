@@ -1,12 +1,13 @@
 import logging
 
 import pandas as pd
+from pathlib import Path
 from typing import TypeVar, Generic
 from pydantic import BaseModel
 
 from ...core.column import Column, DataType
 from .schema import SQLiteDataImportMode
-from .exceptions import QueryResultNotAvailable, QueryColumnsNotAvailable, ColumnDataTypeConversionError
+from .exceptions import QueryInitializationError, QueryResultNotAvailable, QueryColumnsNotAvailable, ColumnDataTypeConversionError
 
 # set logging
 logger = logging.getLogger(__name__)
@@ -37,11 +38,27 @@ class Query(Generic[TColumn]):
 
     def __init__(
         self,
-        query: str,
+        query: str | Path,
         columns: list[TColumn] | None = None,
         params: list[QueryParam] | dict[str, ParamValue] | None = None
     ) -> None:
-        self.query = query
+
+        # setup query
+        if isinstance(query, Path):
+            logger.info(f"loading query from file: {query}")
+
+            if not query.exists():
+                raise QueryInitializationError(f"file {query} not found")
+
+            self.query = query.read_text()
+        elif isinstance(query, str):
+            if Path(query).exists():
+                logger.info(f"loading query from file: {query}")
+                with open(query, "r") as f:
+                    self.query = f.read()
+            else:
+                self.query = query
+
         self.columns = columns
         self.params = params
 

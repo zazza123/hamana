@@ -1,11 +1,12 @@
 import pytest
 from typing import cast
+from pathlib import Path
 from datetime import datetime
 
 from pandas import DataFrame
 
 import hamana as hm
-from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable
+from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable, QueryInitializationError
 
 DB_SQLITE_TEST_PATH = "tests/data/db/test.db"
 
@@ -31,6 +32,20 @@ def test_get_insert_query_no_columns() -> None:
     query = hm.Query(query = "SELECT * FROM users")
     with pytest.raises(QueryColumnsNotAvailable):
         query.get_insert_query("users")
+
+def test_load_query_from_file() -> None:
+    """Test used to define a query from file."""
+
+    file_path = "tests/data/file/t_dtypes_select.sql"
+    query = hm.Query(file_path)
+    assert query.query == "SELECT *\nFROM T_DTYPES"
+
+def test_load_query_from_file_error() -> None:
+    """Test used to define a query from file with an error."""
+
+    file_path = Path("tests/data/file/t_dtypes_select_error.sql")
+    with pytest.raises(QueryInitializationError):
+        hm.Query(file_path)
 
 def test_get_create_query_success() -> None:
     """Test get_create_query method."""
