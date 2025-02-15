@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.core.series import Series as PandasSeries
 
 from .exceptions import ColumnIdentifierError, ColumnIdentifierEmptySeriesError
-from .column import Column, NumberColumn, IntegerColumn, StringColumn, BooleanColumn, DatetimeColumn
+from .column import Column, NumberColumn, IntegerColumn, StringColumn, BooleanColumn, DatetimeColumn, DateColumn
 
 TColumn = TypeVar("TColumn", bound = Column, covariant = True)
 
@@ -95,7 +95,7 @@ class ColumnIdentifier(Generic[TColumn]):
         return _series
 
     @staticmethod
-    def infer(series: Any, column_name: str, order: int | None = None, *args: Any, **kwargs: Any) -> NumberColumn | IntegerColumn | StringColumn | BooleanColumn | DatetimeColumn:
+    def infer(series: Any, column_name: str, order: int | None = None, *args: Any, **kwargs: Any) -> NumberColumn | IntegerColumn | StringColumn | BooleanColumn | DatetimeColumn | DateColumn:
         """
             Infers the column type from a given series. The function passes 
             the series to the default `hamana` identifiers in the following
@@ -127,6 +127,12 @@ class ColumnIdentifier(Generic[TColumn]):
         logger.debug("start")
 
         try:
+            # infer date column
+            inferred_column = date_identifier(series, column_name, order, *args, **kwargs)
+            if inferred_column is not None:
+                logger.info(f"date column inferred, format: {inferred_column.format}")
+                return inferred_column
+
             # infer datetime column
             inferred_column = datetime_identifier(series, column_name, order, *args, **kwargs)
             if inferred_column is not None:
@@ -476,7 +482,8 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, order: int 
             "%Y/%m/%d",
             "%Y%m%d %H:%M:%S",
             "%Y%m%d %H:%M",
-            "%Y%m%d"
+            "%Y%m%d",
+            "%Y%m%d%H%M%S"
         ]
     else:
         format_list = [format]
@@ -505,5 +512,82 @@ datetime_identifier = ColumnIdentifier[DatetimeColumn](pandas = _default_datetim
     the corresponding functions' documentation.
 
     - pandas: `_default_datetime_pandas`
+    - polars: None
+"""
+
+"""
+    Default Identifier for the `DatetimeColumn` class.
+"""
+def _default_date_pandas(series: PandasSeries, column_name: str, order: int | None = None, format: str | None = None) -> DateColumn | None:
+    """
+        This function defines the default behavior to identify a date column from a `pandas` series.
+
+        The function leverages on `DatetimeColumn` deault pandas identifier method 
+        `_default_datetime_pandas` to identify the column. However, the function 
+        considers only datetime formats that do not contain time information.
+
+        Default Formats:
+            - `YYYY-MM-DD`
+            - `YYYY/MM/DD`
+            - `YYYYMMDD`
+
+        Parameters:
+            series: `pandas` series to be checked.
+            column_name: name of the column to be checked.
+            format: date format used to try to convert the series.
+                If the format is provided, then the default formats are 
+                not used. Observe that the format must not contain time
+                information.
+
+        Returns:
+            `DateColumn` if the column is a datetime column, `None` otherwise.
+
+        Raises:
+            ColumnDateFormatterError: if the format is not valid.
+    """
+    logger.debug("start")
+    column = None
+
+    # check valid format
+    if format is not None:
+        logger.debug("check valid format")
+        DateColumn.check_format(format)
+
+    # drop null values
+    _series = series.replace("", None).dropna().astype("str")
+    logger.debug(f"dropped null values: {len(series) - len(_series)}")
+    ColumnIdentifier.is_empty(_series, raise_error = True)
+
+    # set format
+    format_list: list[str]
+    if format is None:
+        logger.debug("no format provided, check most common formats")
+        format_list = [
+            "%Y-%m-%d",
+            "%Y/%m/%d",
+            "%Y%m%d"
+        ]
+    else:
+        format_list = [format]
+
+    # check formats
+    logger.debug("check datetime formats")
+    for _format in format_list:
+        if _default_datetime_pandas(_series, column_name, order, _format) is not None:
+            logger.info(f"format '{_format}' used, date column found")
+            column = DateColumn(name = column_name, format = _format, order = order)
+            column.inferred = True
+
+    logger.debug("end")
+    return column
+
+date_identifier = ColumnIdentifier[DatetimeColumn](pandas = _default_date_pandas)
+"""
+    Default identifier for the `Datetime` class.
+
+    More details on the default methods can be found in
+    the corresponding functions' documentation.
+
+    - pandas: `_default_date_pandas`
     - polars: None
 """

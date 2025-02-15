@@ -6,6 +6,7 @@ from .identifier import (
     string_identifier,
     boolean_identifier,
     datetime_identifier,
+    date_identifier
 )
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "integer_identifier",
     "string_identifier",
     "boolean_identifier",
-    "datetime_identifier"
+    "datetime_identifier",
+    "date_identifier"
 ]

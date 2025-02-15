@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import hamana as hm
 
-from hamana.core.exceptions import ColumnIdentifierEmptySeriesError
+from hamana.core.exceptions import ColumnIdentifierEmptySeriesError, ColumnDateFormatterError
 
 def test_identifier_is_empty_no_error():
     """Test identifier data is empty and no error is provided."""
@@ -231,6 +231,74 @@ def test_datetime_identifier_invalid_data():
         column = hm.core.datetime_identifier(series, "test")
 
         assert column is None
+
+# Date Identifier
+def test_date_identifier_valid_default_format():
+    """Test date identifier with valid data and default format."""
+
+    admissible = [
+        { "format": "%Y-%m-%d", "data": ["2023-12-31", "2023-03-12"]},
+        { "format": "%Y/%m/%d", "data": ["2023/12/31", "2023/03/12"]},
+        { "format": "%Y%m%d", "data": ["20231231", "20230312"]},
+    ]
+
+    for dt_data in admissible:
+        series = pd.Series(dt_data["data"])
+        column = hm.core.date_identifier(series, "test")
+
+        assert isinstance(column, hm.column.DateColumn)
+        assert column.format == dt_data["format"]
+
+def test_date_identifier_valid_provided_format():
+    """Teat date identifier with valid data and provided format."""
+
+    input = {
+        "format": "%d-%m-%Y",
+        "data": ["31-12-2023", "12-03-2023", None]
+    }
+
+    series = pd.Series(input["data"])
+    column = hm.core.date_identifier(series, "test", format = input["format"])
+
+    assert isinstance(column, hm.column.DateColumn)
+    assert column.format == input["format"]
+
+def test_date_identifier_infer():
+    """Test date identifier with infer format."""
+
+    data = [
+        "2023-12-31",
+        "20230312",
+        None,
+        "2023/03/12"
+    ]
+
+    series = pd.Series(data)
+    column = hm.core.date_identifier(series, "test", format = "mixed")
+
+    assert isinstance(column, hm.column.DateColumn)
+
+def test_date_identifier_invalid_data():
+    """Test date identifier with invalid data."""
+
+    data = [
+        ["2023-12-31 23:58:10", "hello world", None, "2023/03/12 08:10"],
+        [1, 2, 3, 4],
+        [1.2, 10.34, -1.4]
+    ]
+
+    for dt_data in data:
+        series = pd.Series(dt_data)
+        column = hm.core.date_identifier(series, "test")
+
+        assert column is None
+
+def test_date_identifier_invalid_format():
+    """Test date identifier with invalid format."""
+
+    with pytest.raises(ColumnDateFormatterError):
+        series = pd.Series(["2023-12-31 23:58:10", "2023-03-12 08:10:00"])
+        hm.core.date_identifier(series, "test", format = "%Y-%m-%d %H:%M:%S")
 
 # Infer Column
 def test_identifier_infer_column():
