@@ -71,17 +71,65 @@ def test_integer_identifier_not_valid():
 def test_integer_identifier_valid():
     """Test integer identifier with valid data."""
 
-    admissible = [
-        ["1000" , 1000, "-12", "0", "12532346"], # integers (no separator)
-        ["1,000"],                   # integers (with separator)
-        ["1.000"],                   # integers (with separator)
-        ["12.532.346"],              # integers (with separator)
-        ["12,532,346"],              # integers (with separator)
-    ]
+    # 1. Integers (no separator)
+    data = {
+        "data": ["1000" , 1000, "-12", "0", "12532346"],
+        "thousands_separator": ",",
+        "decimal_separator": "."
+    }
 
-    for sign in admissible:
-        series = pd.Series(sign)
-        assert isinstance(hm.core.integer_identifier(series, "test"), hm.column.IntegerColumn)
+    inferred_column = hm.core.integer_identifier(pd.Series(data["data"]), "test")
+    assert isinstance(inferred_column, hm.column.IntegerColumn)
+    assert inferred_column.decimal_separator == data["decimal_separator"]
+    assert inferred_column.thousands_separator == data["thousands_separator"]
+
+    # 2. Integers (with separator)
+    data = {
+        "data": ["1,000", "-1,321,000", "53"],
+        "thousands_separator": ",",
+        "decimal_separator": "."
+    }
+
+    inferred_column = hm.core.integer_identifier(pd.Series(data["data"]), "test")
+    assert isinstance(inferred_column, hm.column.IntegerColumn)
+    assert inferred_column.decimal_separator == data["decimal_separator"]
+    assert inferred_column.thousands_separator == data["thousands_separator"]
+
+    # 3. Integers (with separator)
+    data = {
+        "data": ["1.000", "-1.321.000", "53"],
+        "thousands_separator": ".",
+        "decimal_separator": ","
+    }
+
+    inferred_column = hm.core.integer_identifier(pd.Series(data["data"]), "test")
+    assert isinstance(inferred_column, hm.column.IntegerColumn)
+    assert inferred_column.decimal_separator == data["decimal_separator"]
+    assert inferred_column.thousands_separator == data["thousands_separator"]
+
+    # 4. Integers (with separator)
+    data = {
+        "data": ["1.000", "-1.321", "53"],
+        "thousands_separator": ".",
+        "decimal_separator": ","
+    }
+
+    inferred_column = hm.core.integer_identifier(pd.Series(data["data"]), "test")
+    assert isinstance(inferred_column, hm.column.IntegerColumn)
+    assert inferred_column.decimal_separator == data["decimal_separator"]
+    assert inferred_column.thousands_separator == data["thousands_separator"]
+
+    # 5. Integers
+    data = {
+        "data": [None, 1, 2, -1],
+        "thousands_separator": ",",
+        "decimal_separator": "."
+    }
+
+    inferred_column = hm.core.integer_identifier(pd.Series(data["data"]), "test")
+    assert isinstance(inferred_column, hm.column.IntegerColumn)
+    assert inferred_column.decimal_separator == data["decimal_separator"]
+    assert inferred_column.thousands_separator == data["thousands_separator"]
 
 # String Identifier
 def test_string_identifier_valid():

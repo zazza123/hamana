@@ -274,6 +274,9 @@ def _default_integer_pandas(series: PandasSeries, column_name: str, order: int |
         return None
     logger.debug("number column inferred")
 
+    # adjust series
+    _series = _series.str.replace(r"\.0$", "", regex = True)
+
     # check separators
     comma_separator_count = _series.str.replace(r"[0-9\.\-\+eE]", "", regex = True).str.len().max()
     logger.debug(f"comma separator count: {comma_separator_count}")
@@ -282,14 +285,14 @@ def _default_integer_pandas(series: PandasSeries, column_name: str, order: int |
     logger.debug(f"dot separator count: {dot_separator_count}")
 
     # infer thousands separator
-    thousands_separator = None
-    decimal_separator: str = ""
-    if dot_separator_count >= 0 and comma_separator_count == 0:
-        thousands_separator = "."
-        decimal_separator   = ","
-    elif comma_separator_count >= 0 and dot_separator_count == 0:
+    thousands_separator = inferred_column.thousands_separator
+    decimal_separator = inferred_column.decimal_separator
+    if comma_separator_count >= 0 and dot_separator_count == 0:
         thousands_separator = ","
         decimal_separator   = "."
+    elif dot_separator_count >= 0 and comma_separator_count == 0:
+        thousands_separator = "."
+        decimal_separator   = ","
 
     int_regex = rf"^[+-]?(\d+(\{thousands_separator}" + r"\d{3})*|\d{1,2})$"
     if thousands_separator is not None and _series.str.match(int_regex).all():
