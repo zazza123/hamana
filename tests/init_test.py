@@ -50,6 +50,47 @@ def create_sqlite_dtype_table(db_path: str) -> None:
     connection.close()
     return
 
+def create_sqlite_dtype_null_table(db_path: str) -> None:
+    """
+        Function to create the table `T_DTYPES_NULLS` on a SQLite database. 
+        This table is used to test the dtype conversion with also NULL
+        values.
+
+        Parameters:
+            db_path: Path to the SQLite database.
+    """
+
+    # connect to database
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+
+    # create table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS T_DTYPES_NULLS (
+            c_integer   INTEGER,
+            c_number    REAL,
+            c_text      TEXT,
+            c_boolean   INTEGER,
+            c_datetime  REAL,
+            c_timestamp REAL
+        )"""
+    )
+
+    # insert dummy data
+    dummy_data = [
+        [None, 0.01, "string_1", 1   , 20210101.0, 20210101.010101],
+        [2   , 10.2, None      , 0   , 20210102.0, None           ],
+        [3   , -1.3, "string_2", 1   , None      , 20210102.200000],
+        [4   , None, "string_3", None, 20210103.0, 20210103.000100],
+    ]
+    cursor.executemany("INSERT INTO T_DTYPES_NULLS (c_integer, c_number, c_text, c_boolean, c_datetime, c_timestamp) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
+    connection.commit()
+
+    # close connection
+    cursor.close()
+    connection.close()
+    return
+
 def create_sql_query_file(file_path: str) -> None:
     """
         This function creates a SQL query file for testing.
@@ -136,6 +177,7 @@ if __name__ == "__main__":
     """
     # create database
     create_sqlite_dtype_table(DB_SQLITE_TEST_PATH)
+    create_sqlite_dtype_null_table(DB_SQLITE_TEST_PATH)
 
     # create SQL query file
     create_sql_query_file(SQL_FILE_PATH)

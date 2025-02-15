@@ -130,7 +130,7 @@ def test_to_sqlite_success() -> None:
     assert query_on_db.columns[1].dtype == hm.column.DataType.NUMBER
     assert query_on_db.columns[2].dtype == hm.column.DataType.STRING
     assert query_on_db.columns[3].dtype == hm.column.DataType.INTEGER
-    assert query_on_db.columns[4].dtype == hm.column.DataType.NUMBER
+    assert query_on_db.columns[4].dtype == hm.column.DataType.INTEGER
     assert query_on_db.columns[5].dtype == hm.column.DataType.NUMBER
 
     hm.disconnect()
