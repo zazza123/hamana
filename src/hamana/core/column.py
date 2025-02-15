@@ -582,9 +582,7 @@ class DateColumn(DatetimeColumn):
     ) -> None:
 
         # check format
-        not_admissible_formats = ["%H", "%I", "%p", "%M", "%S", "%f", "%z", "%c", "%X"]
-        if any([f in format for f in not_admissible_formats]):
-            raise ColumnDateFormatterError(f"date format {format} should not contain time part")
+        self.check_format(format)
 
         # call the parent class constructor
         super().__init__(name, format, null_default_value, parser, order)
@@ -593,3 +591,18 @@ class DateColumn(DatetimeColumn):
         self.dtype = DataType.DATE
 
         return
+
+    @staticmethod
+    def check_format(format: str) -> None:
+        """
+            Function to check if the date format contains a time part.
+
+            Parameters:
+                format: date format to be checked.
+
+            Raises:
+                `ColumnDateFormatterError`: error raised when the date format contains a time part.
+        """
+        not_admissible_formats = ["%H", "%I", "%p", "%M", "%S", "%f", "%z", "%c", "%X"]
+        if any([f in format for f in not_admissible_formats]):
+            raise ColumnDateFormatterError(f"date format {format} should not contain time part")
