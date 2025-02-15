@@ -11,7 +11,7 @@ import pandas as pd
 from pandas.errors import OutOfBoundsDatetime
 from pandas.core.series import Series as PandasSeries
 
-from .exceptions import ColumnParserPandasDatetimeError, ColumnParserPandasNumberError
+from .exceptions import ColumnParserPandasDatetimeError, ColumnParserPandasNumberError, ColumnDateFormatterError
 
 # set logging
 logger = logging.getLogger(__name__)
@@ -55,6 +55,9 @@ class DataType(Enum):
 
     DATETIME = "datetime"
     """Datetime data type."""
+
+    DATE = "date"
+    """Date data type."""
 
     CUSTOM = "custom"
     """Custom data type."""
@@ -108,6 +111,8 @@ class DataType(Enum):
                 return "INTEGER"
             case DataType.DATETIME:
                 return "REAL"
+            case DataType.DATE:
+                return "INTEGER"
             case DataType.CUSTOM:
                 return "BLOB"
             case _:
@@ -543,3 +548,48 @@ class DatetimeColumn(Column):
                 _series = _series.mask(_series_nulls, self.null_default_value)
 
         return _series
+
+class DateColumn(DatetimeColumn):
+    """
+        Class representing `DataType.DATE` columns.
+
+        The class inherits from the `DatetimeColumn` class and can 
+        be used to store date values. Different from the `DatetimeColumn`
+        class, the `DateColumn` class does not store the time part of the
+        datetime.
+
+        Note:
+            During the initialization, the `format` is analysed to ensure that no 
+            time part is present. If the time part is found, an error is raised.
+
+        Similar to the `DatetimeColumn` class, the `DateColumn` class provides attributes 
+        that could be used to define the properties of the date column, such as:
+            - `format`: the format to be used to parse the date.
+                By default, the format is set to `%Y-%m-%d`.
+            - `null_default_value`: the default value to be used when a null value is found.
+                By default, the default value is set to `None`.
+
+        Raises:
+            `ColumnDateFormatterError`: error raised when the date format contains a time part.
+    """
+
+    def __init__(self,
+        name: str,
+        format: str = "%Y-%m-%d",
+        null_default_value: datetime | pd.Timestamp | None = None,
+        parser: ColumnParser | None = None,
+        order: int | None = None
+    ) -> None:
+
+        # check format
+        not_admissible_formats = ["%H", "%I", "%p", "%M", "%S", "%f", "%z", "%c", "%X"]
+        if any([f in format for f in not_admissible_formats]):
+            raise ColumnDateFormatterError(f"date format {format} should not contain time part")
+
+        # call the parent class constructor
+        super().__init__(name, format, null_default_value, parser, order)
+
+        # override types
+        self.dtype = DataType.DATE
+
+        return

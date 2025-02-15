@@ -8,6 +8,13 @@ class HamanaException(Exception):
     def __str__(self):
         return self.description
 
+class ColumnDateFormatterError(HamanaException):
+    """
+        Exception raised when there is not admitted date format.
+    """
+    def __init__(self, description):
+        super().__init__(description)
+
 class ColumnParserPandasNumberError(HamanaException):
     """
         Exception raised when there is an error parsing a number column
