@@ -1,6 +1,5 @@
 import csv
 import pytest
-from datetime import datetime
 
 import pandas as pd
 
@@ -114,7 +113,7 @@ def test_csv_column_provided_with_header() -> None:
 
     assert len(csv_file.columns) == 6
     assert csv_file.columns[0] == hm.column.StringColumn(order = 0, name = "c_integer")
-    assert csv_file.columns[0].inferred == False
+    assert not csv_file.columns[0].inferred
     assert csv_file.columns[1] == hm.column.NumberColumn(order = 1, name = "c_number")
     assert csv_file.columns[2] == hm.column.StringColumn(order = 2, name = "c_text")
     assert csv_file.columns[3] == hm.column.StringColumn(order = 3, name = "c_boolean")

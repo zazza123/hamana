@@ -169,6 +169,25 @@ def create_csv_test_files(csv_path: str) -> None:
         for row in content:
             file.write(";".join(row) + "\n")
 
+    # FILE: csv_with_nulls.csv
+    content = [
+        [""  , "0.01", "string_1", "True" , "2021-01-01", "2021-01-01 01:01:01"],
+        ["2" , "10.2", ""        , "False", "2021-01-02", ""                   ],
+        ["3" , "-1.3", "string_2", "True" , ""          , "2021-01-03 20:00:00"],
+        ["4" , ""    , "string_3", ""     , "2021-01-04", "2021-01-04 00:10:00"]
+    ]
+    csv_name = "csv_with_nulls.csv"
+    csv_file_path = csv_path + csv_name
+    # remove the file if it exists
+    if os.path.exists(csv_file_path):
+        os.remove(csv_file_path)
+
+    # write the CSV file
+    with open(csv_path + csv_name, "w") as file:
+        file.write(",".join(header) + "\n")
+        for row in content:
+            file.write(",".join(row) + "\n")
+
     return
 
 if __name__ == "__main__":

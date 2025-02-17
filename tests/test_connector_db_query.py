@@ -1,5 +1,4 @@
 import pytest
-from typing import cast
 from pathlib import Path
 from datetime import datetime
 

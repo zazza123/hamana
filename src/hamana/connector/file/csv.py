@@ -160,7 +160,8 @@ class CSVConnector:
             dialect = self.dialect, # type: ignore
             header = 0 if self.has_header else None,
             names = [column.name for column in self.columns],
-            encoding = self.encoding
+            encoding = self.encoding,
+            dtype = "object"
         )
         logger.info(f"data extracted, rows: {df_result.shape[0]}, columns: {df_result.shape[1]}")
 
