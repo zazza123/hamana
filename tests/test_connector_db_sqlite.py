@@ -36,36 +36,28 @@ def test_execute_query_without_meta() -> None:
     db = hm.connector.db.SQLite(DB_SQLITE_TEST_PATH)
 
     # execute query
-    query = db.execute("SELECT * FROM T_DTYPES WHERE c_integer = 1")
+    query = db.execute("SELECT * FROM T_DTYPES")
 
     # check result
     df = query.result
     assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
-
     # check data
-    assert df.c_integer.to_list() == [1]
-    assert df.c_number.to_list() == [0.01]
-    assert df.c_text.to_list() == ["string_1"]
-    assert df.c_boolean.to_list() == [1]
-    assert df.c_datetime.to_list() == [20210101.0]
-    assert df.c_timestamp.to_list() == [20210101.010101]
+    pd.testing.assert_series_equal(df.c_integer, pd.Series([1, 2, 3], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(df.c_number, pd.Series([0.01, 10.2, -1.3], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(df.c_text, pd.Series(["string_1", "string_2", "string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(df.c_boolean, pd.Series([1, 0, 1], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01", "2021-01-02", "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01", "2021-01-02 01:01:01", "2021-01-03 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     # check dtype
     assert query.columns[0].dtype == hm.column.DataType.INTEGER
     assert query.columns[1].dtype == hm.column.DataType.NUMBER
     assert query.columns[2].dtype == hm.column.DataType.STRING
     assert query.columns[3].dtype == hm.column.DataType.INTEGER
-    assert query.columns[4].dtype == hm.column.DataType.INTEGER
-    assert query.columns[5].dtype == hm.column.DataType.NUMBER
+    assert query.columns[4].dtype == hm.column.DataType.DATE
+    assert query.columns[5].dtype == hm.column.DataType.DATETIME
 
 def test_execute_query_without_meta_nulls() -> None:
     """
@@ -90,20 +82,20 @@ def test_execute_query_without_meta_nulls() -> None:
     assert query.columns is not None
 
     # check data
-    pd.testing.assert_series_equal(df.c_integer, pd.Series([None, 2, 3, 4], dtype = "float64", name = "c_integer"))
+    pd.testing.assert_series_equal(df.c_integer, pd.Series([0, 2, 3, 4], dtype = "int64", name = "c_integer"))
     pd.testing.assert_series_equal(df.c_number, pd.Series([0.01, 10.2, -1.3, None], dtype = "float64", name = "c_number"))
     pd.testing.assert_series_equal(df.c_text, pd.Series(["string_1", None, "string_2", "string_3"], dtype = "object", name = "c_text"))
-    pd.testing.assert_series_equal(df.c_boolean, pd.Series([1, 0, 1, None], dtype = "float64", name = "c_boolean"))
-    pd.testing.assert_series_equal(df.c_datetime, pd.Series([20210101, 20210102, None, 20210103], dtype = "float64", name = "c_datetime"))
-    pd.testing.assert_series_equal(df.c_timestamp, pd.Series([20210101.010101, None, 20210102.200000, 20210103.000100], dtype = "float64", name = "c_timestamp"))
+    pd.testing.assert_series_equal(df.c_boolean, pd.Series([1, 0, 1, 0], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01", "2021-01-02", None, "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01", None, "2021-01-02 20:00:00", "2021-01-03 00:01:00"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     # check dtype
     assert query.columns[0].dtype == hm.column.DataType.INTEGER
     assert query.columns[1].dtype == hm.column.DataType.NUMBER
     assert query.columns[2].dtype == hm.column.DataType.STRING
     assert query.columns[3].dtype == hm.column.DataType.INTEGER
-    assert query.columns[4].dtype == hm.column.DataType.INTEGER
-    assert query.columns[5].dtype == hm.column.DataType.NUMBER
+    assert query.columns[4].dtype == hm.column.DataType.DATE
+    assert query.columns[5].dtype == hm.column.DataType.DATETIME
 
 def test_execute_query_with_meta() -> None:
     """
@@ -127,8 +119,8 @@ def test_execute_query_with_meta() -> None:
             hm.column.NumberColumn(order = 1, name = "c_number"),
             hm.column.StringColumn(order = 2, name = "c_text"),
             hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = 1, false_value = 0),
-            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y%m%d.0"),
-            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y%m%d.%H%M%S")
+            hm.column.DateColumn(order = 4, name = "c_date", format = "%Y%m%d"),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime", format = "%Y%m%d%H%M%S")
         ],
         params = [hm.query.QueryParam(name = "row_id", value = 1)]
     )
@@ -141,29 +133,21 @@ def test_execute_query_with_meta() -> None:
     assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
+    # check data
+    pd.testing.assert_series_equal(df.c_integer, pd.Series([1], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(df.c_number, pd.Series([0.01], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(df.c_text, pd.Series(["string_1"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(df.c_boolean, pd.Series([True], dtype = "bool", name = "c_boolean"))
+    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     # check dtype
-    assert df.c_integer.dtype.name      == "int64"
-    assert df.c_number.dtype.name       == "float64"
-    assert df.c_text.dtype.name         == "object"
-    assert df.c_boolean.dtype.name      == "bool"
-    assert df.c_datetime.dtype.name     == "datetime64[ns]"
-    assert df.c_timestamp.dtype.name    == "datetime64[ns]"
-
-    # check data
-    assert df.c_integer.to_list() == [1]
-    assert df.c_number.to_list() == [0.01]
-    assert df.c_text.to_list() == ["string_1"]
-    assert df.c_boolean.to_list() == [True]
-    assert df.c_datetime.to_list() == [datetime(2021, 1, 1)]
-    assert df.c_timestamp.to_list() == [pd.Timestamp("2021-01-01 01:01:01")]
+    assert query.columns[0].dtype == hm.column.DataType.INTEGER
+    assert query.columns[1].dtype == hm.column.DataType.NUMBER
+    assert query.columns[2].dtype == hm.column.DataType.STRING
+    assert query.columns[3].dtype == hm.column.DataType.BOOLEAN
+    assert query.columns[4].dtype == hm.column.DataType.DATE
+    assert query.columns[5].dtype == hm.column.DataType.DATETIME
 
 def test_execute_query_with_meta_nulls() -> None:
     """
@@ -187,8 +171,8 @@ def test_execute_query_with_meta_nulls() -> None:
             hm.column.NumberColumn(order = 1, name = "c_number"),
             hm.column.StringColumn(order = 2, name = "c_text"),
             hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = 1, false_value = 0),
-            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y%m%d.0"),
-            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y%m%d.%H%M%S")
+            hm.column.DateColumn(order = 4, name = "c_date", format = "%Y%m%d"),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime", format = "%Y%m%d%H%M%S")
         ],
         params = [hm.query.QueryParam(name = "row_id", value = 1)]
     )
@@ -201,29 +185,13 @@ def test_execute_query_with_meta_nulls() -> None:
     assert isinstance(df, pd.DataFrame)
     assert query.columns is not None
 
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
-
-    # check dtype
-    assert df.c_integer.dtype.name      == "int64"
-    assert df.c_number.dtype.name       == "float64"
-    assert df.c_text.dtype.name         == "object"
-    assert df.c_boolean.dtype.name      == "bool"
-    assert df.c_datetime.dtype.name     == "datetime64[ns]"
-    assert df.c_timestamp.dtype.name    == "datetime64[ns]"
-
     # check data
-    assert df.c_integer.to_list() == [1]
-    assert df.c_number.to_list() == [0.01]
-    assert df.c_text.to_list() == ["string_1"]
-    assert df.c_boolean.to_list() == [True]
-    assert df.c_datetime.to_list() == [datetime(2021, 1, 1)]
-    assert df.c_timestamp.to_list() == [pd.Timestamp("2021-01-01 01:01:01")]
+    pd.testing.assert_series_equal(df.c_integer, pd.Series([0, 2, 3, 4], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(df.c_number, pd.Series([0.01, 10.2, -1.3, None], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(df.c_text, pd.Series(["string_1", None, "string_2", "string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(df.c_boolean, pd.Series([True, False, True, None], dtype = "object", name = "c_boolean"))
+    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01", "2021-01-02", None, "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01", None, "2021-01-02 20:00:00", "2021-01-03 00:01:00"], dtype = "datetime64[ns]", name = "c_datetime"))
 
 def test_execute_query_re_order_column() -> None:
     """
@@ -314,22 +282,13 @@ def test_to_sqlite_table_not_exists_column_no_meta() -> None:
     query = hm.execute("SELECT * FROM T_DB_SQLITE_TO_SQLITE")
     assert query.columns is not None
 
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
-
     # check data
-    assert isinstance(query.result, pd.DataFrame)
-    assert query.result.c_integer.to_list() == [1, 2, 3]
-    assert query.result.c_number.to_list() == [0.01, 10.2, -1.3]
-    assert query.result.c_text.to_list() == ["string_1", "string_2", "string_3"]
-    assert query.result.c_boolean.to_list() == [1, 0, 1]
-    assert query.result.c_datetime.to_list() == [20210101.0, 20210102.0, 20210103.0]
-    assert query.result.c_timestamp.to_list() == [20210101.010101, 20210102.010101, 20210103.010101]
+    pd.testing.assert_series_equal(query.result.c_integer, pd.Series([1, 2, 3], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(query.result.c_number, pd.Series([0.01, 10.2, -1.3], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(query.result.c_text, pd.Series(["string_1", "string_2", "string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(query.result.c_boolean, pd.Series([1, 0, 1], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(query.result.c_date, pd.Series(["2021-01-01", "2021-01-02", "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(query.result.c_datetime, pd.Series(["2021-01-01 01:01:01", "2021-01-02 01:01:01", "2021-01-03 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     hm.disconnect()
     return
@@ -441,8 +400,8 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
             hm.column.NumberColumn(order = 1, name = "c_number"),
             hm.column.StringColumn(order = 2, name = "c_text"),
             hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = 1, false_value = 0),
-            hm.column.DatetimeColumn(order = 4, name = "c_datetime", format = "%Y%m%d.0"),
-            hm.column.DatetimeColumn(order = 5, name = "c_timestamp", format = "%Y%m%d.%H%M%S")
+            hm.column.DatetimeColumn(order = 4, name = "c_date", format = "%Y%m%d"),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime", format = "%Y%m%d%H%M%S")
         ]
     )
 
@@ -453,24 +412,14 @@ def test_to_sqlite_table_raw_insert_off_column_meta_on() -> None:
     # check result
     query = hm.Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_OFF_META_ON")
     hm.execute(query)
-    assert query.columns is not None
-
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
 
     # check data
-    assert isinstance(query.result, pd.DataFrame)
-    assert query.result.c_integer.to_list() == [3]
-    assert query.result.c_number.to_list() == [-1.3]
-    assert query.result.c_text.to_list() == ["string_3"]
-    assert query.result.c_boolean.to_list() == [1]
-    assert query.result.c_datetime.to_list() == [20210103.0]
-    assert query.result.c_timestamp.to_list() == [20210103.010101]
+    pd.testing.assert_series_equal(query.result.c_integer, pd.Series([3], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(query.result.c_number, pd.Series([-1.3], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(query.result.c_text, pd.Series(["string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(query.result.c_boolean, pd.Series([1], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(query.result.c_date, pd.Series(["2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(query.result.c_datetime, pd.Series(["2021-01-03 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     hm.disconnect()
     return
@@ -497,24 +446,14 @@ def test_to_sqlite_table_raw_insert_on() -> None:
     # check result
     query = hm.Query(query = "SELECT * FROM T_DB_SQLITE_TO_SQLITE_RAW_ON")
     hm.execute(query)
-    assert query.columns is not None
-
-    # check columns
-    assert query.columns[0].name == "c_integer"
-    assert query.columns[1].name == "c_number"
-    assert query.columns[2].name == "c_text"
-    assert query.columns[3].name == "c_boolean"
-    assert query.columns[4].name == "c_datetime"
-    assert query.columns[5].name == "c_timestamp"
 
     # check data
-    assert isinstance(query.result, pd.DataFrame)
-    assert query.result.c_integer.to_list() == [3]
-    assert query.result.c_number.to_list() == [-1.3]
-    assert query.result.c_text.to_list() == ["string_3"]
-    assert query.result.c_boolean.to_list() == [1]
-    assert query.result.c_datetime.to_list() == [20210103.0]
-    assert query.result.c_timestamp.to_list() == [20210103.010101]
+    pd.testing.assert_series_equal(query.result.c_integer, pd.Series([3], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(query.result.c_number, pd.Series([-1.3], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(query.result.c_text, pd.Series(["string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(query.result.c_boolean, pd.Series([1], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(query.result.c_date, pd.Series(["2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(query.result.c_datetime, pd.Series(["2021-01-03 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     hm.disconnect()
     return

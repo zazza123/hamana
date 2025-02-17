@@ -130,7 +130,7 @@ class BaseConnector(DatabaseConnectorABC):
             raise e
 
         logger.debug("convert to Dataframe")
-        df_result = DataFrame(result, columns = [column_name for column_name in columns])
+        df_result = DataFrame(result, columns = [column_name for column_name in columns], dtype = "object")
 
         # adjust columns
         if query.columns:
@@ -149,6 +149,9 @@ class BaseConnector(DatabaseConnectorABC):
                         inferred_column = StringColumn(name = column_name, order = i)
 
                     columns[column_name] = inferred_column
+
+                # adjust column data type
+                df_result[column_name] = columns[column_name].parser.pandas(df_result[column_name]) # type: ignore (always Column)
 
             logger.info("query column updated")
             query.columns = [columns[column_name] for column_name in columns]
@@ -313,7 +316,7 @@ class BaseConnector(DatabaseConnectorABC):
                 query_temp = Query(query = query.query, columns = query.columns)
 
                 # assign result (adjust data types)
-                df_temp = DataFrame(raw_batch, columns = column_names)
+                df_temp = DataFrame(raw_batch, columns = column_names, dtype = "object")
                 df_temp = query_temp.adjust_df(df_temp)
                 query_temp.result = df_temp
 

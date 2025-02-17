@@ -148,8 +148,10 @@ class Query(Generic[TColumn]):
                 match column.dtype:
                     case DataType.BOOLEAN:
                         df_insert[column.name] = df_insert[column.name].astype(int)
+                    case DataType.DATE:
+                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d").astype(int)
                     case DataType.DATETIME:
-                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d.%H%M%S").astype(float)
+                        df_insert[column.name] = df_insert[column.name].dt.strftime("%Y%m%d%H%M%S").astype(int)
 
         # import internal database
         from .hamana import HamanaConnector

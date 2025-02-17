@@ -31,18 +31,18 @@ def create_sqlite_dtype_table(db_path: str) -> None:
             c_number    REAL,
             c_text      TEXT,
             c_boolean   INTEGER,
-            c_datetime  REAL,
-            c_timestamp REAL
+            c_date      INTEGER,
+            c_datetime  INTEGER
         )"""
     )
 
     # insert dummy data
     dummy_data = [
-        [1, 0.01, "string_1", 1, 20210101.0, 20210101.010101],
-        [2, 10.2, "string_2", 0, 20210102.0, 20210102.010101],
-        [3, -1.3, "string_3", 1, 20210103.0, 20210103.010101],
+        [1, 0.01, "string_1", 1, 20210101, 20210101010101],
+        [2, 10.2, "string_2", 0, 20210102, 20210102010101],
+        [3, -1.3, "string_3", 1, 20210103, 20210103010101],
     ]
-    cursor.executemany("INSERT INTO T_DTYPES (c_integer, c_number, c_text, c_boolean, c_datetime, c_timestamp) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
+    cursor.executemany("INSERT INTO T_DTYPES (c_integer, c_number, c_text, c_boolean, c_date, c_datetime) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
     connection.commit()
 
     # close connection
@@ -71,19 +71,19 @@ def create_sqlite_dtype_null_table(db_path: str) -> None:
             c_number    REAL,
             c_text      TEXT,
             c_boolean   INTEGER,
-            c_datetime  REAL,
-            c_timestamp REAL
+            c_date      INTEGER,
+            c_datetime  INTEGER
         )"""
     )
 
     # insert dummy data
     dummy_data = [
-        [None, 0.01, "string_1", 1   , 20210101.0, 20210101.010101],
-        [2   , 10.2, None      , 0   , 20210102.0, None           ],
-        [3   , -1.3, "string_2", 1   , None      , 20210102.200000],
-        [4   , None, "string_3", None, 20210103.0, 20210103.000100],
+        [None, 0.01, "string_1", 1   , 20210101, 20210101010101],
+        [2   , 10.2, None      , 0   , 20210102, None           ],
+        [3   , -1.3, "string_2", 1   , None    , 20210102200000],
+        [4   , None, "string_3", None, 20210103, 20210103000100],
     ]
-    cursor.executemany("INSERT INTO T_DTYPES_NULLS (c_integer, c_number, c_text, c_boolean, c_datetime, c_timestamp) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
+    cursor.executemany("INSERT INTO T_DTYPES_NULLS (c_integer, c_number, c_text, c_boolean, c_date, c_datetime) VALUES (?, ?, ?, ?, ?, ?)", dummy_data)
     connection.commit()
 
     # close connection
@@ -129,7 +129,7 @@ def create_csv_test_files(csv_path: str) -> None:
         os.makedirs(csv_path)
 
     # define CSV
-    header = ["c_integer", "c_number", "c_text", "c_boolean", "c_datetime", "c_timestamp"]
+    header = ["c_integer", "c_number", "c_text", "c_boolean", "c_date", "c_datetime"]
     content = [
         ["1", "1.1", "Hello", "True", "2023-01-01", "2023-01-01 01:02:03"],
         ["2", "2.2", "World", "False", "2023-01-02", "2023-01-02 01:02:03"],

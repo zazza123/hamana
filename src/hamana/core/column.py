@@ -31,6 +31,7 @@ class DataType(Enum):
             - `STRING`: string data type.
             - `BOOLEAN`: boolean data type.
             - `DATETIME`: datetime data type.
+            - `DATE`: date data type.
             - `CUSTOM`: custom data type.
 
         The `CUSTOM` data type is used to represent a custom datatype 
@@ -110,7 +111,7 @@ class DataType(Enum):
             case DataType.BOOLEAN:
                 return "INTEGER"
             case DataType.DATETIME:
-                return "REAL"
+                return "INTEGER"
             case DataType.DATE:
                 return "INTEGER"
             case DataType.CUSTOM:
@@ -251,7 +252,7 @@ class NumberColumn(Column):
                 `ColumnParserPandasNumberError`: error parsing the number column.
         """
 
-        _series = pd.Series(pd.NA, index = series.index)
+        _series = pd.Series(np.nan, index = series.index)
         try:
             _series_number = pd.to_numeric(series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
             _series.loc[_series_number.index] = _series_number
@@ -335,7 +336,7 @@ class IntegerColumn(NumberColumn):
             logger.debug(f"fill nulls, default value: {self.null_default_value}")
             return _series.fillna(self.null_default_value).astype("int")
 
-        return _series.astype("float").apply(np.floor)
+        return pd.Series(_series.astype(float).apply(np.floor), dtype = "Int64")
 
 class StringColumn(Column):
     """

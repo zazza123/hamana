@@ -3,7 +3,7 @@ from typing import cast
 from pathlib import Path
 from datetime import datetime
 
-from pandas import DataFrame
+import pandas as pd
 
 import hamana as hm
 from hamana.connector.db.exceptions import QueryColumnsNotAvailable, QueryResultNotAvailable, QueryInitializationError
@@ -83,19 +83,19 @@ def test_to_sqlite_success() -> None:
             hm.column.NumberColumn(order = 2, name = "c_number"),
             hm.column.StringColumn(order = 3, name = "c_text"),
             hm.column.BooleanColumn(order = 4, name = "c_boolean"),
-            hm.column.DatetimeColumn(order = 5, name = "c_datetime"),
-            hm.column.DatetimeColumn(order = 6, name = "c_timestamp"),
+            hm.column.DateColumn(order = 5, name = "c_date"),
+            hm.column.DatetimeColumn(order = 6, name = "c_datetime"),
         ]
     )
 
     # set result
-    query.result = DataFrame({
+    query.result = pd.DataFrame({
         "c_integer": [1],
         "c_number": [3.14],
         "c_text": ["text"],
         "c_boolean": [True],
-        "c_datetime": [datetime(2021, 1, 1)],
-        "c_timestamp": [datetime(2021, 1, 1, 1, 1, 1)]
+        "c_date": [datetime(2021, 1, 1)],
+        "c_datetime": [datetime(2021, 1, 1, 1, 1, 1)]
     })
 
     # init database
@@ -106,32 +106,23 @@ def test_to_sqlite_success() -> None:
 
     # check (no columns metadata)
     query_on_db = hm.execute("SELECT * FROM T_QUERY_TO_SQLITE")
-
-    # check columns
-    query_on_db.columns = cast(list[hm.column.Column], query_on_db.columns)
-    assert query_on_db.columns[0].name == "c_integer"
-    assert query_on_db.columns[1].name == "c_number"
-    assert query_on_db.columns[2].name == "c_text"
-    assert query_on_db.columns[3].name == "c_boolean"
-    assert query_on_db.columns[4].name == "c_datetime"
-    assert query_on_db.columns[5].name == "c_timestamp"
+    assert query_on_db.columns is not None
 
     # check data
-    query_on_db.result = cast(DataFrame, query_on_db.result)
-    assert query_on_db.result.c_integer.to_list() == [1]
-    assert query_on_db.result.c_number.to_list() == [3.14]
-    assert query_on_db.result.c_text.to_list() == ["text"]
-    assert query_on_db.result.c_boolean.to_list() == [1]
-    assert query_on_db.result.c_datetime.to_list() == [20210101.0]
-    assert query_on_db.result.c_timestamp.to_list() == [20210101.010101]
+    pd.testing.assert_series_equal(query_on_db.result.c_integer, pd.Series([1], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(query_on_db.result.c_number, pd.Series([3.14], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(query_on_db.result.c_text, pd.Series(["text"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(query_on_db.result.c_boolean, pd.Series([1], dtype = "int64", name = "c_boolean"))
+    pd.testing.assert_series_equal(query_on_db.result.c_date, pd.Series(["2021-01-01"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(query_on_db.result.c_datetime, pd.Series(["2021-01-01 01:01:01"], dtype = "datetime64[ns]", name = "c_datetime"))
 
     # check dtype
     assert query_on_db.columns[0].dtype == hm.column.DataType.INTEGER
     assert query_on_db.columns[1].dtype == hm.column.DataType.NUMBER
     assert query_on_db.columns[2].dtype == hm.column.DataType.STRING
     assert query_on_db.columns[3].dtype == hm.column.DataType.INTEGER
-    assert query_on_db.columns[4].dtype == hm.column.DataType.INTEGER
-    assert query_on_db.columns[5].dtype == hm.column.DataType.NUMBER
+    assert query_on_db.columns[4].dtype == hm.column.DataType.DATE
+    assert query_on_db.columns[5].dtype == hm.column.DataType.DATETIME
 
     hm.disconnect()
     return

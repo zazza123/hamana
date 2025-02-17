@@ -60,7 +60,7 @@ def test_column_integer_not_std_parser() -> None:
 
     # Non-standard (decimal separator = ",", thousands separator = ".", null_default_value = None)
     data_input =  pd.Series(["", "0", "9999", "-9999", "9999,999", "9.999,999", "9,999E+3", "9,999e+3", "9,999,999"])
-    data_output = pd.Series([np.nan, 0.0, 9999.0, -9999.0, 9999.0, 9999.0, 9999.0, 9999.0, np.nan])
+    data_output = pd.Series([pd.NA, 0, 9999, -9999, 9999, 9999, 9999, 9999, pd.NA], dtype = "Int64")
     column = hm.column.IntegerColumn("non_standard", decimal_separator = ",", thousands_separator = ".", null_default_value = None)
     result = column.parser.pandas(data_input,  mode = hm.core.column.PandasParsingModes.COERCE)
 

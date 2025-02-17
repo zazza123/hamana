@@ -9,7 +9,7 @@ from .query import Query
 from .base import BaseConnector
 from .schema import DatabaseConnectorConfig
 from .exceptions import DatabaseConnetionError, ColumnDataTypeConversionError
-from ...core.column import Column, NumberColumn, StringColumn, DatetimeColumn
+from ...core.column import Column, NumberColumn, StringColumn, DatetimeColumn, DateColumn
 
 # set logger
 logger = logging.getLogger(__name__)
@@ -149,7 +149,9 @@ class OracleConnector(BaseConnector):
                 column = NumberColumn(name = column_name, order = order)
             case "DB_TYPE_CHAR" | "DB_TYPE_LONG" | "DB_TYPE_NCHAR" | "DB_TYPE_NVARCHAR" | "DB_TYPE_VARCHAR" | "DB_TYPE_ROWID" | "DB_TYPE_UROWID":
                 column = StringColumn(name = column_name, order = order)
-            case "DB_TYPE_DATE" | "DB_TYPE_TIMESTAMP" | "DB_TYPE_TIMESTAMP_LTZ" | "DB_TYPE_TIMESTAMP_TZ":
+            case "DB_TYPE_DATE":
+                column = DateColumn(name = column_name, order = order, format = "%Y-%m-%d 00:00:00")
+            case "DB_TYPE_TIMESTAMP" | "DB_TYPE_TIMESTAMP_LTZ" | "DB_TYPE_TIMESTAMP_TZ":
                 column = DatetimeColumn(name = column_name, order = order)
             case _:
                 raise ColumnDataTypeConversionError(f"Data type {dtype} does not have a corresponding mapping.")
