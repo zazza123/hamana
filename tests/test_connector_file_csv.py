@@ -121,6 +121,57 @@ def test_csv_column_provided_with_header() -> None:
     assert csv_file.columns[5] == hm.column.DatetimeColumn(order = 5, name = "c_datetime")
     return
 
+def test_read_csv_without_meta_nulls() -> None:
+    """
+        Read a CSV file with null values and without column metadata.
+    """
+    csv = hm.connector.file.CSV("tests/data/file/csv_with_nulls.csv", has_header = True)
+    data = csv.execute()
+
+    # check data
+    pd.testing.assert_series_equal(data.result.c_integer, pd.Series([0, 2, 3, 4], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(data.result.c_number, pd.Series([0.01, 10.2, -1.3, None], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(data.result.c_text, pd.Series(["string_1", None, "string_2", "string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(data.result.c_boolean, pd.Series(["True", "False", "True", None], dtype = "object", name = "c_boolean"))
+    pd.testing.assert_series_equal(data.result.c_date, pd.Series(["2021-01-01", "2021-01-02", None, "2021-01-04"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(data.result.c_datetime, pd.Series(["2021-01-01 01:01:01", None, "2021-01-03 20:00:00", "2021-01-04 00:10:00"], dtype = "datetime64[ns]", name = "c_datetime"))
+
+    # check dtype
+    assert csv.columns[0].dtype == hm.column.DataType.INTEGER
+    assert csv.columns[1].dtype == hm.column.DataType.NUMBER
+    assert csv.columns[2].dtype == hm.column.DataType.STRING
+    assert csv.columns[3].dtype == hm.column.DataType.STRING
+    assert csv.columns[4].dtype == hm.column.DataType.DATE
+    assert csv.columns[5].dtype == hm.column.DataType.DATETIME
+    return
+
+def test_read_csv_with_meta_nulls() -> None:
+    """
+        Read a CSV file with null values and with column metadata.
+    """
+    csv = hm.connector.file.CSV(
+        file_path = "tests/data/file/csv_with_nulls.csv",
+        has_header = True,
+        columns = [
+            hm.column.IntegerColumn(order = 0, name = "c_integer"),
+            hm.column.NumberColumn(order = 1, name = "c_number"),
+            hm.column.StringColumn(order = 2, name = "c_text"),
+            hm.column.BooleanColumn(order = 3, name = "c_boolean", true_value = "True", false_value = "False"),
+            hm.column.DatetimeColumn(order = 4, name = "c_date", format = "%Y-%m-%d"),
+            hm.column.DatetimeColumn(order = 5, name = "c_datetime", format = "%Y-%m-%d %H:%M:%S")
+        ]
+    )
+    data = csv.execute()
+
+    # check data
+    pd.testing.assert_series_equal(data.result.c_integer, pd.Series([0, 2, 3, 4], dtype = "int64", name = "c_integer"))
+    pd.testing.assert_series_equal(data.result.c_number, pd.Series([0.01, 10.2, -1.3, None], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(data.result.c_text, pd.Series(["string_1", None, "string_2", "string_3"], dtype = "object", name = "c_text"))
+    pd.testing.assert_series_equal(data.result.c_boolean, pd.Series([True, False, True, None], dtype = "object", name = "c_boolean"))
+    pd.testing.assert_series_equal(data.result.c_date, pd.Series(["2021-01-01", "2021-01-02", None, "2021-01-04"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(data.result.c_datetime, pd.Series(["2021-01-01 01:01:01", None, "2021-01-03 20:00:00", "2021-01-04 00:10:00"], dtype = "datetime64[ns]", name = "c_datetime"))
+    return
+
 def test_execute_csv_with_header_without_meta() -> None:
     """
         Test case for the CSV connector when the file has a header and the 
