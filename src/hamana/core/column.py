@@ -431,9 +431,9 @@ class BooleanColumn(Column):
 
     def pandas_default_parser(self, series: PandasSeries) -> PandasSeries:
         """
-            Default `pandas` parser for the boolean columns. The function
-            converts the column to string type and maps the values to `True`
-            and `False` based on the `true_value` and `false_value` attributes.
+            Default `pandas` parser for the boolean columns.
+            The function maps the values to `True` and `False` 
+            based on the `true_value` and `false_value` attributes.
 
             Observe that all other values are set to `None`.
 
@@ -501,9 +501,11 @@ class DatetimeColumn(Column):
             Observe that `pandas.to_datetime` could raise an `OutOfBoundsDatetime` error
             when the datetime is out of bounds. In this case, the function switches to
             a 'slow' mode where it first converts the column to string type and divides 
-            it into two parts: 
-                - the part that could be casted to datetime using the `pandas.to_datetime`.
-                - the part that could not be casted, and should be parsed using the `dateutil.parser`.
+            it into two parts:
+
+            - the part that could be casted to datetime using the `pandas.to_datetime`.
+            - the part that could not be casted, and should be parsed using the `dateutil.parser`.
+
             This approach is slower than the default one, but can handle out of bounds datetimes.
 
             Finally, the function fills the null values with the default value, if set.

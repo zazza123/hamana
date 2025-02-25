@@ -1,8 +1,7 @@
 <p align="center">
     <a href="https://zazza123.github.io/hamana">
-        <img src="https://raw.githubusercontent.com/zazza123/hamana/main/docs/config/images/logo.png" alt="hamana" height="150px" class="readme">
+        <img src="https://raw.githubusercontent.com/zazza123/hamana/main/docs/config/images/hamana-home.png" alt="hamana" width="600px" class="readme">
     </a>
-    <i>(Hamster Analysis)</i>
 </p>
 
 ---
@@ -12,15 +11,17 @@
 </p>
 <hr class="readme">
 
-**hamana** is a Python library designed to simplify data analysis by combining the practicality of **pandas** and **SQL** in an open-source environment. This library was born from the experience of working in a large company where tools like `SAS` were often used as "shortcuts" to perform SQL queries across different data sources, without fully leveraging their potential. With the goal of providing a free and accessible alternative, `hamana` replicates these functionalities in an open-source context.
+**hamana** (*Hamster Analysis*) is a Python library designed to simplify data analysis by combining the practicality of **pandas** and **SQL** in an open-source environment. This library was born from the experience of working in a large company where tools like `SAS` were often used as "shortcuts" to perform SQL queries across different data sources, without fully leveraging their potential. With the goal of providing a free and accessible alternative, `hamana` replicates these functionalities in an open-source context.
 
 ## Why Choose `hamana`?
+
+<img align="left" width="150" alt="Hamana Explain" src="config/images/hamana-explain.png">
 
 - **Support for Multiple Data Sources**: Connect to various data sources such as relational databases, CSV files, mainframes, and more.
 - **SQLite Integration**: Save data locally in an SQLite database, either as a file or in memory.
 - **SQL + pandas**: Combine the power of `SQL` with the flexibility of `pandas` for advanced analysis.
 - **Open Source**: Available to everyone without licensing costs.
-- **Why "Hamster"?**: Because hamsters are awesome! 🐹
+- **Why "Hamster"?**: Because hamsters are awesome!
 
 ## Key Features
 
@@ -125,4 +126,4 @@ This project is distributed under the **MIT** license.
 For questions or suggestions, you can open an **Issue** on GitHub or contact me directly.
 
 ---
-Thank you for choosing Hamana! 🐹
+Thank you for choosing Hamana!

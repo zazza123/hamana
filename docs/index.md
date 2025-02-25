@@ -13,8 +13,9 @@ hide:
 }
 </style>
 
-<div style="display: flex; align-items: center; justify-content: center;">
-    <span style="margin-left: 10px; font-size: 4em;">hamana</span>
-</div>
+<figure markdown="span">
+  ![Image title](config/images/hamana-home.png){ width="600" }
+  <figcaption>Illustrations by <a href="https://www.instagram.com/gaiaparte/">@gaiaparte</a></figcaption>
+</figure>
 
 --8<-- "README.md"

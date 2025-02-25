@@ -5,17 +5,17 @@ repo_name: zazza123/hamana
 
 theme:
   name: material
-  #favicon: config/images/favicon.png
+  favicon: config/images/hamana-lens.png
   custom_dir: docs/config/overrides
   language: en
-  icon:
-    logo: material/cat
+  logo: config/images/hamana-head.png
   features:
     - navigation.instant
     - navigation.instant.progress
     - navigation.tabs
     - navigation.top
     - navigation.indexes
+    - navigation.footer
     - toc.follow
     - search.suggest
     - content.code.copy
@@ -103,5 +103,12 @@ nav:
     - Query: core/query.md
     - Column: core/column.md
 
+extra:
+  social:
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/gaiaparte/
+      name: Illustrations by
+
 extra_css:
   - config/css/mkdocstrings.css
+  - config/css/nav.css

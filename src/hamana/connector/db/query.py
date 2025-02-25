@@ -127,6 +127,7 @@ class Query(Generic[TColumn]):
             then the method performs an automatic conversion to a SQLite data type.
 
             In particular, the conversions are:
+
             - `bool` columns are mapped to `INTEGER` data type, with the values 
             `True` and `False` converted to `1` and `0`.
             - `date` and `datetime` columns are mapped to `INTEGER` datatype, with the values 
