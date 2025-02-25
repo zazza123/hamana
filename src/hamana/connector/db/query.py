@@ -33,7 +33,7 @@ class QueryParam(BaseModel):
 
 class Query(Generic[TColumn]):
     """
-        Class to represent a query to be executed in the database.
+        Class to represent a query object.
     """
 
     def __init__(
@@ -63,11 +63,14 @@ class Query(Generic[TColumn]):
         self.params = params
 
     query: str
-    """Query to be executed in the database."""
+    """
+        Query to be executed in the database. It is possible to provide directly the 
+        SQL query as a string or to load it from a file by providing the file path.
+    """
 
     params: list[QueryParam] | dict[str, ParamValue] | None = None
     """
-        List of parameters used in the query.  
+        List of parameters used in the query. 
         The parameters are replaced by their values when the query is executed.
     """
 
@@ -75,7 +78,7 @@ class Query(Generic[TColumn]):
     """
         Definition of the columns returned by the query. 
         The columns are used to map the query result to the application data.
-        If not provided, the query result columns matches the database output.
+        If not provided, then the columns are inferred from the result.
     """
 
     flag_executed: bool = False
@@ -85,7 +88,9 @@ class Query(Generic[TColumn]):
     def result(self) -> pd.DataFrame:
         """
             Result of the query execution. 
-            The result is a DataFrame with the columns defined in the query.
+            The result is a `pandas.DataFrame` with columns
+            equals the ones defined in the `columns` attribute, 
+            or inferred from the extraction.
 
             Raises:
                 QueryResultNotAvailable: if no result is available; e.g., the query has not been executed.
@@ -103,7 +108,7 @@ class Query(Generic[TColumn]):
     def get_params(self) -> dict[str, ParamValue] | None:
         """
             Returns the query parameters as a dictionary.
-            Returns None if there are no parameters.
+            Returns `None` if there are no parameters.
         """
         if isinstance(self.params, list):
             _params = {param.name : param.value for param in self.params}
@@ -114,20 +119,19 @@ class Query(Generic[TColumn]):
     def to_sqlite(self, table_name: str, mode: SQLiteDataImportMode = SQLiteDataImportMode.REPLACE) -> None:
         """
             This function is used to insert the query result into a 
-            table hosted on the `hamana` internal database (HamanaConnector).
+            table hosted on the `hamana` internal database (`HamanaConnector`).
 
             The `hamana` db is a SQLite database, for this reason 
-            `bool`, `datetime` and `timestamp` data types are supported.
+            `bool`, `datetime` and `timestamp` data types are **not** supported.
             If some of the columns are defined with these data types, 
             then the method performs an automatic conversion to a SQLite data type.
 
             In particular, the conversions are:
             - `bool` columns are mapped to `INTEGER` data type, with the values 
             `True` and `False` converted to `1` and `0`.
-            - `datetime` columns are mapped to `REAL` data type, with the values 
-            converted to a float number using the following format: `YYYYMMDD.HHmmss`.
-                Observes that the integer part represents the date in the format YYYYMMDD,
-                while the decimal part represents the time component in the format HHmmss.
+            - `date` and `datetime` columns are mapped to `INTEGER` datatype, with the values 
+                converted to an int number using the following format: `YYYYMMDDHHmmss`
+                for `dateitme`, `YYYYMMDD` for `date`.
 
             Parameters:
                 table_name: name of the table to create into the database.
@@ -265,15 +269,19 @@ class Query(Generic[TColumn]):
 
     def adjust_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-            This function is used to adjust a DataFrame (usually 
+            This function is used to adjust a `pandas.DataFrame` (usually 
             the result of a query) based on the columns provided.
 
-            The function re-orders the columns of the DataFrame 
-            and check the data types; if they do not match, then 
+            The function re-orders the columns of the `DataFrame` 
+            and checks the data types; if they do not match, then 
             the function will try to convert the requested one.
 
             Parameters:
                 df: DataFrame to adjust
+
+            Raises:
+                QueryColumnsNotAvailable: if the columns do not match between the query and the result.
+                ColumnDataTypeConversionError: if there is an error during the data type conversion.
         """
         logger.debug("start")
 

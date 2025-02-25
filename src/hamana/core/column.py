@@ -26,13 +26,14 @@ class DataType(Enum):
         Enumeration representing the datatypes of the `hamana` columns.
 
         The library supports the following data types:
-            - `INTEGER`: integer data type.
-            - `NUMBER`: number data type.
-            - `STRING`: string data type.
-            - `BOOLEAN`: boolean data type.
-            - `DATETIME`: datetime data type.
-            - `DATE`: date data type.
-            - `CUSTOM`: custom data type.
+
+        - `INTEGER`: integer data type.
+        - `NUMBER`: number data type.
+        - `STRING`: string data type.
+        - `BOOLEAN`: boolean data type.
+        - `DATETIME`: datetime data type.
+        - `DATE`: date data type.
+        - `CUSTOM`: custom data type.
 
         The `CUSTOM` data type is used to represent a custom datatype 
         that could be used for dedicated implementations.
@@ -147,11 +148,12 @@ class Column:
         Class representing a column in the `hamana` library.
 
         To define a column, the following attributes are required:
-            - `name`: name of the column.
-            - `dtype`: represents the datatype and should be an instance of `DataType`.
-            - `parser`: a column in `hamana` could have an associated `parser` object 
-                that could be used to parse list of values; e.g. useful when data are 
-                extracted from different data sources and should be casted  and normalized.
+
+        - `name`: name of the column.
+        - `dtype`: represents the datatype and should be an instance of `DataType`.
+        - `parser`: a column in `hamana` could have an associated `parser` object 
+            that could be used to parse list of values; e.g. useful when data are 
+            extracted from different data sources and should be casted  and normalized.
     """
 
     name: str
@@ -180,12 +182,13 @@ class NumberColumn(Column):
 
         The class provides attributes that could be used to define 
         the properties of the number column, such as:
-            - `decimal_separator`: the decimal separator used in the number.
-                By default, the decimal separator is set to `.`.
-            - `thousands_separator`: the thousands separator used in the number.
-                By default, the thousands separator is set to `,`.
-            - `null_default_value`: the default value to be used when a null value is found.
-                By default, the default value is set to `None`.
+
+        - `decimal_separator`: the decimal separator used in the number.
+            By default, the decimal separator is set to `.`.
+        - `thousands_separator`: the thousands separator used in the number.
+            By default, the thousands separator is set to `,`.
+        - `null_default_value`: the default value to be used when a null value is found.
+            By default, the default value is set to `None`.
 
         The class also provides a default parser that could be used to parse 
         the number column using `pandas`.
@@ -274,12 +277,13 @@ class IntegerColumn(NumberColumn):
         Similar to the `NumberColumn` class, the `IntegerColumn` class
         provides attributes that could be used to define the properties
         of the integer column, such as:
-            - `decimal_separator`: the decimal separator used in the number.
-                By default, the decimal separator is set to `.`.
-            - `thousands_separator`: the thousands separator used in the number.
-                By default, the thousands separator is set to `,`.
-            - `null_default_value`: the default value to be used when a null value is found.
-                By default, the default value is set to `0`.
+
+        - `decimal_separator`: the decimal separator used in the number.
+            By default, the decimal separator is set to `.`.
+        - `thousands_separator`: the thousands separator used in the number.
+            By default, the thousands separator is set to `,`.
+        - `null_default_value`: the default value to be used when a null value is found.
+            By default, the default value is set to `0`.
     """
 
     def __init__(
@@ -383,10 +387,11 @@ class BooleanColumn(Column):
 
         The class provides attributes that could be used to define 
         the properties of the boolean column, such as: 
-            - `true_value`: the value to be used to represent the `True` value.
-                By default, the value is set to `Y`.
-            - `false_value`: the value to be used to represent the `False` value.
-                By default, the value is set to `N`.
+
+        - `true_value`: the value to be used to represent the `True` value.
+            By default, the value is set to `Y`.
+        - `false_value`: the value to be used to represent the `False` value.
+            By default, the value is set to `N`.
 
         The class also provides a default parser that could be used to parse
         the boolean column using `pandas`.
@@ -446,10 +451,11 @@ class DatetimeColumn(Column):
 
         The class provides attributes that could be used to define 
         the properties of the datetime column, such as:
-            - `format`: the format to be used to parse the datetime.
-                By default, the format is set to `%Y-%m-%d %H:%M:%S`.
-            - `null_default_value`: the default value to be used when a null value is found.
-                By default, the default value is set to `None`.
+
+        - `format`: the format to be used to parse the datetime.
+            By default, the format is set to `%Y-%m-%d %H:%M:%S`.
+        - `null_default_value`: the default value to be used when a null value is found.
+            By default, the default value is set to `None`.
 
         The class also provides a default parser that could be used to parse
         the datetime column using `pandas`.
@@ -565,10 +571,11 @@ class DateColumn(DatetimeColumn):
 
         Similar to the `DatetimeColumn` class, the `DateColumn` class provides attributes 
         that could be used to define the properties of the date column, such as:
-            - `format`: the format to be used to parse the date.
-                By default, the format is set to `%Y-%m-%d`.
-            - `null_default_value`: the default value to be used when a null value is found.
-                By default, the default value is set to `None`.
+
+        - `format`: the format to be used to parse the date.
+            By default, the format is set to `%Y-%m-%d`.
+        - `null_default_value`: the default value to be used when a null value is found.
+            By default, the default value is set to `None`.
 
         Raises:
             `ColumnDateFormatterError`: error raised when the date format contains a time part.

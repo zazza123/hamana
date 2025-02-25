@@ -99,6 +99,9 @@ nav:
       - connector/file/index.md
       - CSV: connector/file/csv.md
       - Exceptions: connector/file/exceptions.md
+  - Core:
+    - Query: core/query.md
+    - Column: core/column.md
 
 extra_css:
   - config/css/mkdocstrings.css

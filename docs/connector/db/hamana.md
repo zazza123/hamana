@@ -37,11 +37,19 @@ hamana_db.close()
 ## HamanaConnector
 
 ::: hamana.connector.db.hamana.HamanaConnector
+    options:
+        heading_level: 3
 
 ## Shortcut Methods
 
 ::: hamana.connector.db.hamana.connect
+    options:
+        heading_level: 3
 
 ::: hamana.connector.db.hamana.execute
+    options:
+        heading_level: 3
 
 ::: hamana.connector.db.hamana.disconnect
+    options:
+        heading_level: 3

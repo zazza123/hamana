@@ -1,9 +1,9 @@
 # File Connectors
 
-The `hamana.connector.file` package provides a set of connectors to interact with files data sources (CSV, Excel, etc.). 
+The `hamana.connector.file` package provides a set of connectors to interact with files data sources (CSV, Excel, etc.).
 The package is designed to be extensible and easy to use.
 
-Due to the variety of file formats, it is difficult to provide a common interface for all the connectors. 
+Due to the variety of file formats, it is difficult to provide a common interface for all the connectors.
 However, the connectors should provide at least the following methods:
 
 - `execute`: read the entire content of the file and store it in memory. Usually, the method returns a Query object with the results stored in the `result` attribute as a `pandas.DataFrame`. This approach could be useful for queries that rerturn a limited number of rows.
