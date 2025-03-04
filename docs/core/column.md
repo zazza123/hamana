@@ -30,15 +30,79 @@ Before presenting the `Column` class, we first introduce the `DataType` class. T
 
 ## Parser
 
-Another useful 
+Another useful functionality that could be available in the `Column` class is the `parser` attribute. This variable, if present, is an instance of the `ColumnParser` class, that is used to convert the data from the source to the internal representation.
+
+The `ColumnParser` class is composed of two methods:
+
+- `pandas`: this method **must** respect the protocol `PandasParser`, and it is specifically used to convert `pandas.Series` input datas.
+- `polars`: currently not supported, but it will be used to convert `polars.Series` input datas.
+
+By default, the `Column` class does not provide any parser, but the `NumberColumn`, `IntegerColumn`, `StringColumn`, `BooleanColumn`, `DatetimeColumn`, and `DateColumn` classes provide a default implementation of the `ColumnParser` class.
+
+::: hamana.core.column.ColumnParser
+    options:
+        heading_level: 3
 
 ::: hamana.core.column.PandasParser
     options:
         heading_level: 3
 
-::: hamana.core.column.ColumnParser
+## Identifier
+
+The are many situations where it is required to identity the column datatype (string, number, date, etc.), e.g. when the data is extracted from file sources like CSV files. To solve this problem, `hamana` provides the `ColumnIdentifier` class, that is used to identify the column type according to an input data.
+
+Similarly to the `ColumnParser` class, the `ColumnIdentifier` class is composed of two methods:
+
+- `pandas`: this method **must** respect the protocol `PandasIdentifier`, and it is specifically used to identify the column type from a `pandas.Series` input data.
+- `polars`: currently not supported, but it will be used to identify the column type from a `polars.Series` input data.
+
+::: hamana.core.identifier.ColumnIdentifier
     options:
         heading_level: 3
+
+::: hamana.core.identifier.PandasIdentifier
+    options:
+        heading_level: 3
+
+### Default Identifiers
+
+`hamana` provides a set of default identifiers that can be used to identify the default's `hamana` column types.
+
+#### Number Identifier
+
+::: hamana.core.identifier.number_identifier
+
+::: hamana.core.identifier._default_numeric_pandas
+
+#### Integer Identifier
+
+::: hamana.core.identifier.integer_identifier
+
+::: hamana.core.identifier._default_integer_pandas
+
+#### String Identifier
+
+::: hamana.core.identifier.string_identifier
+
+::: hamana.core.identifier._default_string_pandas
+
+#### Boolean Identifier
+
+::: hamana.core.identifier.boolean_identifier
+
+::: hamana.core.identifier._default_boolean_pandas
+
+#### Datetime Identifier
+
+::: hamana.core.identifier.datetime_identifier
+
+::: hamana.core.identifier._default_datetime_pandas
+
+#### Date Identifier
+
+::: hamana.core.identifier.date_identifier
+
+::: hamana.core.identifier._default_date_pandas
 
 ## API
 

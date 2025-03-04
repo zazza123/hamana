@@ -124,8 +124,14 @@ class PandasParser(Protocol):
     """
         Protocol representing a parser for `pandas` series.
 
-        A `pansas` parser is a function that requires at least a `pandas` series 
+        A `pandas` parser is a function that requires at least a `pandas` series 
         to be taken as input and returned as output after dedicated transformations.
+
+        **Structure**:
+        ```python
+        def parser(series: pandas.Series, *args: Any, **kwargs: Any) -> pandas.Series:
+            ...
+        ```
     """
     def __call__(self, series: PandasSeries, *args: Any, **kwargs: Any) -> PandasSeries:
         ...

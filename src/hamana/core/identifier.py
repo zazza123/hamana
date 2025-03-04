@@ -20,11 +20,18 @@ class PandasIdentifier(Protocol[TColumn]):
 
         A `PandasIdentifier` is a callable that must have at least 
         the following input parameters:
-            - series: the `pandas` series to identify the column type from.
-            - column_name: the name of the column to identify.
 
-        The `PandasIdentifier` must return a column type or None if the
+        - series: the `pandas` series to identify the column type from.
+        - column_name: the name of the column to identify.
+
+        The `PandasIdentifier` must return a column type or `None` if the
         column type could not be identified.
+
+        **Structure**
+        ```python
+        def __call__(self, series: PandasSeries, column_name: str, order: int | None = None, *args: Any, **kwargs: Any) -> TColumn | None:
+            ...
+        ```
     """
     def __call__(self, series: PandasSeries, column_name: str, order: int | None = None, *args: Any, **kwargs: Any) -> TColumn | None:
         ...
@@ -79,8 +86,8 @@ class ColumnIdentifier(Generic[TColumn]):
                 **kwargs: additional keyword arguments to pass to the identifier.
 
             Returns:
-                the identified column type or None if the column type
-                could not be identified.
+                the identified column type or `None` if the column type
+                    could not be identified.
         """
         logger.debug("start")
 
@@ -101,17 +108,17 @@ class ColumnIdentifier(Generic[TColumn]):
             the series to the default `hamana` identifiers in the following
             order:
 
-                - DatetimeColumn
-                - BooleanColumn
-                - IntegerColumn
-                - NumberColumn
-                - StringColumn
+            - [`DatetimeColumn`][hamana.core.column.DatetimeColumn]
+            - [`BooleanColumn`][hamana.core.column.BooleanColumn]
+            - [`IntegerColumn`][hamana.core.column.IntegerColumn]
+            - [`NumberColumn`][hamana.core.column.NumberColumn]
+            - [`StringColumn`][hamana.core.column.StringColumn]
 
             in order to infer the column type.
 
             Note:
                 If the column is empty, then by default the 
-                function assign the STRING datatype.
+                function assign the `STRING` datatype.
 
             Parameters:
                 series: the series to infer the column type from.
@@ -176,16 +183,17 @@ def _default_numeric_pandas(series: PandasSeries, column_name: str, order: int |
         This function defines the default behavior to identify a number column from a `pandas` series.
 
         In order to identify a number column, the function follows the steps:
-            - Drop null values (included empty strings)
-            - Check if the column has letters
-            - Count the max appearance of the comma and dot 
-                separators in all the elements.
-            - Evaluate first the default configuration (dot decimal separator, 
-                comma thousands separator).
-            - If the default configuration does not work, evaluate the 
-                alternative configuration (comma decimal separator, dot 
-                thousands separator).
-            - If also this configuration does not work, return None.
+
+        - Drop null values (included empty strings)
+        - Check if the column has letters
+        - Count the max appearance of the comma and dot 
+            separators in all the elements.
+        - Evaluate first the default configuration (dot decimal separator, 
+            comma thousands separator).
+        - If the default configuration does not work, evaluate the 
+            alternative configuration (comma decimal separator, dot 
+            thousands separator).
+        - If also this configuration does not work, return None.
 
         Parameters:
             series: `pandas` series to be checked.
@@ -243,7 +251,7 @@ number_identifier = ColumnIdentifier[NumberColumn](pandas = _default_numeric_pan
     the corresponding functions' documentation.
 
     - pandas: `_default_numeric_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
 
 """
@@ -254,10 +262,11 @@ def _default_integer_pandas(series: PandasSeries, column_name: str, order: int |
         This function defines the default behavior to identify an integer column from a `pandas` series.
 
         In order to identify an integer column, the function follows the steps:
-            - Drop null values (included empty strings)
-            - Check if the column can be considered as number datatype
-            - If the check is passed, then is checked if the column is 
-                composed only by integers (included the sign).
+
+        - Drop null values (included empty strings)
+        - Check if the column can be considered as number datatype
+        - If the check is passed, then is checked if the column is 
+            composed only by integers (included the sign).
 
         Parameters:
             series: `pandas` series to be checked.
@@ -319,7 +328,7 @@ integer_identifier = ColumnIdentifier[IntegerColumn](pandas = _default_integer_p
     the corresponding functions' documentation.
 
     - pandas: `_default_integer_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
 
 """
@@ -368,7 +377,7 @@ string_identifier = ColumnIdentifier[StringColumn](pandas = _default_string_pand
     the corresponding functions' documentation.
 
     - pandas: `_default_string_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
 
 """
@@ -422,7 +431,7 @@ boolean_identifier = ColumnIdentifier[BooleanColumn](pandas = _default_boolean_p
     the corresponding functions' documentation.
 
     - pandas: `_default_boolean_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
 
 """
@@ -441,15 +450,16 @@ def _default_datetime_pandas(series: PandasSeries, column_name: str, order: int 
         a datetime column only if all the values are converted correctly.
 
         Default Formats:
-            - `YYYY-MM-DD HH:mm:ss`
-            - `YYYY-MM-DD HH:mm`
-            - `YYYY-MM-DD`
-            - `YYYY/MM/DD HH:mm:ss`
-            - `YYYY/MM/DD HH:mm`
-            - `YYYY/MM/DD`
-            - `YYYYMMDD HH:mm:ss`
-            - `YYYYMMDD HH:mm`
-            - `YYYYMMDD`
+
+        - `YYYY-MM-DD HH:mm:ss`
+        - `YYYY-MM-DD HH:mm`
+        - `YYYY-MM-DD`
+        - `YYYY/MM/DD HH:mm:ss`
+        - `YYYY/MM/DD HH:mm`
+        - `YYYY/MM/DD`
+        - `YYYYMMDD HH:mm:ss`
+        - `YYYYMMDD HH:mm`
+        - `YYYYMMDD`
 
         Parameters:
             series: `pandas` series to be checked.
@@ -512,7 +522,7 @@ datetime_identifier = ColumnIdentifier[DatetimeColumn](pandas = _default_datetim
     the corresponding functions' documentation.
 
     - pandas: `_default_datetime_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
 
 """
@@ -527,9 +537,10 @@ def _default_date_pandas(series: PandasSeries, column_name: str, order: int | No
         considers only datetime formats that do not contain time information.
 
         Default Formats:
-            - `YYYY-MM-DD`
-            - `YYYY/MM/DD`
-            - `YYYYMMDD`
+
+        - `YYYY-MM-DD`
+        - `YYYY/MM/DD`
+        - `YYYYMMDD`
 
         Parameters:
             series: `pandas` series to be checked.
@@ -589,5 +600,5 @@ date_identifier = ColumnIdentifier[DatetimeColumn](pandas = _default_date_pandas
     the corresponding functions' documentation.
 
     - pandas: `_default_date_pandas`
-    - polars: None
+    - polars: `None` (not implemented)
 """
