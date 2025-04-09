@@ -15,7 +15,7 @@
 
 ## Why Choose `hamana`?
 
-<img align="left" width="150" alt="Hamana Explain" src="config/images/hamana-explain.png">
+<img align="left" width="150" alt="Hamana Explain" src="docs/config/images/hamana-explain.png">
 
 - **Support for Multiple Data Sources**: Connect to various data sources such as relational databases, CSV files, mainframes, and more.
 - **SQLite Integration**: Save data locally in an SQLite database, either as a file or in memory.
