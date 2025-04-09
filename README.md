@@ -119,7 +119,7 @@ All contributions are welcome!
 
 ## License
 
-This project is distributed under the **MIT** license.
+This project is distributed under the **BSD 3-Clause "New" or "Revised"** license.
 
 ## Contact
 
