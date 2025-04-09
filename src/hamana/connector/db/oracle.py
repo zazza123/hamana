@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from dataclasses import dataclass
 from typing import Any, Generator, overload
 
 from oracledb import Connection, ConnectParams
@@ -14,6 +15,7 @@ from ...core.column import Column, NumberColumn, StringColumn, DatetimeColumn, D
 # set logger
 logger = logging.getLogger(__name__)
 
+@dataclass
 class OracleConnectorConfig(DatabaseConnectorConfig):
     """
         Class to represent the configuration of an Oracle database.

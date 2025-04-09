@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 class SQLiteDataImportMode(str, Enum):
     """
@@ -16,7 +16,8 @@ class SQLiteDataImportMode(str, Enum):
     FAIL = "fail"
     """Fail if the table already exists."""
 
-class DatabaseConnectorConfig(BaseModel):
+@dataclass
+class DatabaseConnectorConfig:
     """
         Class to represent the **base** configuration of a database.
     """

@@ -5,6 +5,8 @@ build-backend = "hatchling.build"
 [project]
 name = "hamana"
 version = "0.0.1-dev"
+description = "A python library for seamless data extraction, storage, and SQL-based analysis using Pandas and SQLite."
+readme = "README.md"
 requires-python = ">=3.12"
 authors = [
     { name = "Andrea Zanini", email= "" },
@@ -14,7 +16,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Environment :: Web Environment",
-    "Framework :: Pydantic",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
@@ -23,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "pandas>=2.2.3",
-    "pydantic>=2.9.2",
     "oracledb>=2.4.1"
 ]
 

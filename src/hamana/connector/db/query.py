@@ -1,9 +1,9 @@
 import logging
+from dataclasses import dataclass
 
 import pandas as pd
 from pathlib import Path
 from typing import TypeVar, Generic
-from pydantic import BaseModel
 
 from ...core.column import Column, DataType
 from .schema import SQLiteDataImportMode
@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 ParamValue = int | float | str | bool
 TColumn = TypeVar("TColumn", bound = Column, covariant = True)
 
-class QueryParam(BaseModel):
+@dataclass
+class QueryParam:
     """
         Class to represent a parameter used in a query.  
         A parameter is represented by a name and its value.
