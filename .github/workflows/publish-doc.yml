@@ -1,0 +1,58 @@
+name: publish-doc
+
+on:
+  release:
+    types: [created]
+  push:
+    paths:
+      - 'docs/**'
+      - README.md
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  deploy:
+    name: deploy a new version of hamana library documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: zazza123/hamana
+          ref: main
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+
+      # set up environment
+      - name: setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.12
+
+      # manage caches
+      - name: create cache
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-py-${{ env.pythonLocation }}-${{ hashFiles('docs/requirements.txt') }}-doc
+
+      # install dependencies
+      - name: install pip and dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade pip
+          pip install -r docs/requirements.txt
+
+      # setup git bot credentials
+      - run: git config user.name github-actions[bot]
+      - run: git config user.email github-actions[bot]@users.noreply.github.com
+
+      - name: deploy documentation
+        run: mkdocs gh-deploy --force
+      
+      # check workflow output
+      - name: dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
