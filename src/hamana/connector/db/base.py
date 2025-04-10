@@ -210,7 +210,7 @@ class BaseConnector(DatabaseConnectorABC):
 
                             inferred_column = None
                             if columns[column_name] is None:
-                                logger.debug(f"column {column_name} still not inferred, default infering")
+                                logger.debug(f"column {column_name} still not inferred, default infering.")
                                 try:
                                     inferred_column = ColumnIdentifier.infer(df_temp[column_name], column_name, i)
                                 except ColumnIdentifierError:

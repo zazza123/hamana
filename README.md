@@ -3,7 +3,7 @@
         <img src="https://raw.githubusercontent.com/zazza123/hamana/main/docs/config/images/hamana-home.png" alt="hamana" width="600px" class="readme">
     </a>
 </p>
-<p>
+<p align="center">
     Illustrations by <a href="https://www.instagram.com/gaiaparte/">@gaiaparte</a>
 </p>
 <p align="center">
