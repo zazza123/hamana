@@ -2,15 +2,17 @@
     <a href="https://zazza123.github.io/hamana">
         <img src="https://raw.githubusercontent.com/zazza123/hamana/main/docs/config/images/hamana-home.png" alt="hamana" width="600px" class="readme">
     </a>
+</p>
+<p>
     Illustrations by <a href="https://www.instagram.com/gaiaparte/">@gaiaparte</a>
 </p>
 <p align="center">
-  <a href="https://pypi.org/project/hamana" target="_blank"><img src="https://img.shields.io/pypi/pyversions/hamana.svg?color=%2334D058" alt="Supported Python Versions" height="18"></a>
-  <a href="https://pypi.org/project/hamana"><img src="https://img.shields.io/pypi/v/hamana?color=%2334D058&label=pypi" alt="PyPI version" height="18"></a>
-  <a href="https://github.com/zazza123/hamana/actions/workflows/execute-tests.yml?query=branch%3Amain+event%3Apush"><img src="https://github.com/zazza123/hamana/actions/workflows/execute-tests.yml/badge.svg?branch=main&action=push" alt="Tests" height="18"></a>
-  <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/zazza123/hamana" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/zazza123/hamana.svg" alt="Coverage" height="18"></a>
-  <a href="https://pepy.tech/project/hamana" target="_blank"><img src="https://static.pepy.tech/badge/hamana/month" alt="Statistics" height="18"></a>
-  <a href="https://github.com/zazza123/hamana/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/zazza123/hamana.svg" alt="License" height="18"></a>
+    <a href="https://pypi.org/project/hamana" target="_blank"><img src="https://img.shields.io/pypi/pyversions/hamana.svg?color=%2334D058" alt="Supported Python Versions" height="18"></a>
+    <a href="https://pypi.org/project/hamana"><img src="https://img.shields.io/pypi/v/hamana?color=%2334D058&label=pypi" alt="PyPI version" height="18"></a>
+    <a href="https://github.com/zazza123/hamana/actions/workflows/execute-tests.yml?query=branch%3Amain+event%3Apush"><img src="https://github.com/zazza123/hamana/actions/workflows/execute-tests.yml/badge.svg?branch=main&action=push" alt="Tests" height="18"></a>
+    <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/zazza123/hamana" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/zazza123/hamana.svg" alt="Coverage" height="18"></a>
+    <a href="https://pepy.tech/project/hamana" target="_blank"><img src="https://static.pepy.tech/badge/hamana/month" alt="Statistics" height="18"></a>
+    <a href="https://github.com/zazza123/hamana/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/zazza123/hamana.svg" alt="License" height="18"></a>
 </p>
 
 ---
