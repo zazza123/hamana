@@ -81,7 +81,9 @@ jobs:
 
       # init test data
       - name: init test data
-        run: python tests/init_tests.py
+        run: |
+          mkdir -p tests/data
+          python tests/init.py
 
       # execute tests
       - name: execute pytest coverage
