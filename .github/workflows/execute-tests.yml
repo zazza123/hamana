@@ -82,7 +82,8 @@ jobs:
       # init test data
       - name: init test data
         run: |
-          mkdir -p tests/data
+          mkdir -p tests/data/db
+          mkdir -p tests/data/file
           python tests/init.py
 
       # execute tests
