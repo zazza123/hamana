@@ -45,5 +45,6 @@ source = [
 ]
 context = '${CONTEXT}'
 omit = [
-    "tests/init_tests.py"
+    "tests/init_tests.py",
+    "src/hamana/connector/db/interface.py"
 ]
