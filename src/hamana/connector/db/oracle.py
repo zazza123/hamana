@@ -3,8 +3,10 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Generator, overload
 
+from oracledb import defaults
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
+defaults.fetch_lobs = False
 
 from .query import Query
 from .base import BaseConnector
@@ -149,7 +151,7 @@ class OracleConnector(BaseConnector):
         match dtype_str:
             case "DB_TYPE_BINARY_DOUBLE " | "DB_TYPE_BINARY_FLOAT" | "DB_TYPE_BINARY_INTEGER" | "DB_TYPE_NUMBER":
                 column = NumberColumn(name = column_name, order = order)
-            case "DB_TYPE_CHAR" | "DB_TYPE_LONG" | "DB_TYPE_NCHAR" | "DB_TYPE_NVARCHAR" | "DB_TYPE_VARCHAR" | "DB_TYPE_ROWID" | "DB_TYPE_UROWID":
+            case "DB_TYPE_CHAR" | "DB_TYPE_LONG" | "DB_TYPE_NCHAR" | "DB_TYPE_NVARCHAR" | "DB_TYPE_VARCHAR" | "DB_TYPE_ROWID" | "DB_TYPE_UROWID" | "DB_TYPE_CLOB":
                 column = StringColumn(name = column_name, order = order)
             case "DB_TYPE_DATE":
                 column = DateColumn(name = column_name, order = order, format = "%Y-%m-%d 00:00:00")
