@@ -95,8 +95,11 @@ class ColumnIdentifier(Generic[TColumn]):
 
         # pandas series
         if isinstance(series, PandasSeries):
-            logging.debug("Identifying column type using pandas identifier.")
-            _series = self.pandas(series, column_name, order, *args, **kwargs)
+            try:
+                logging.debug("Identifying column type using pandas identifier.")
+                _series = self.pandas(series, column_name, order, *args, **kwargs)
+            except:
+                logger.warning("pandas identifier failed.")
 
         logger.debug("end")
         return _series
