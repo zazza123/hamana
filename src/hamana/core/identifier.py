@@ -6,7 +6,7 @@ from typing import Protocol, Any, TypeVar, Generic
 import pandas as pd
 from pandas.core.series import Series as PandasSeries
 
-from .exceptions import ColumnIdentifierError, ColumnIdentifierEmptySeriesError
+from .exceptions import ColumnIdentifierError, ColumnIdentifierEmptySeriesError, ColumnDateFormatterError
 from .column import Column, NumberColumn, IntegerColumn, StringColumn, BooleanColumn, DatetimeColumn, DateColumn
 
 TColumn = TypeVar("TColumn", bound = Column, covariant = True)
@@ -98,6 +98,10 @@ class ColumnIdentifier(Generic[TColumn]):
             try:
                 logging.debug("Identifying column type using pandas identifier.")
                 _series = self.pandas(series, column_name, order, *args, **kwargs)
+            except ColumnDateFormatterError as e:
+                logger.error("Column date formatter error.")
+                logger.exception(e)
+                raise e
             except Exception as e:
                 logger.info("pandas identifier failed.")
                 logger.exception(e)

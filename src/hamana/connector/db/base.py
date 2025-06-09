@@ -59,6 +59,7 @@ class BaseConnector(DatabaseConnectorABC):
             column_name = column[0]
             column_type = column[1]
             logger.debug(f"column: {column_name}, type: {column_type}")
+            logger.debug(f"column full info: {column}")
 
             if column_type is not None:
                 try:
