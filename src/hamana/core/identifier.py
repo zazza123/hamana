@@ -98,8 +98,9 @@ class ColumnIdentifier(Generic[TColumn]):
             try:
                 logging.debug("Identifying column type using pandas identifier.")
                 _series = self.pandas(series, column_name, order, *args, **kwargs)
-            except:
-                logger.warning("pandas identifier failed.")
+            except Exception as e:
+                logger.info("pandas identifier failed.")
+                logger.exception(e)
 
         logger.debug("end")
         return _series

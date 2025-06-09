@@ -6,13 +6,15 @@ from typing import Any, Generator, overload
 from oracledb import defaults
 from oracledb import Connection, ConnectParams
 from oracledb.exceptions import OperationalError
-defaults.fetch_lobs = False
 
 from .query import Query
 from .base import BaseConnector
 from .schema import DatabaseConnectorConfig
 from .exceptions import DatabaseConnetionError, ColumnDataTypeConversionError
 from ...core.column import Column, NumberColumn, StringColumn, DatetimeColumn, DateColumn
+
+# set Oracle defaults
+defaults.fetch_lobs = False
 
 # set logger
 logger = logging.getLogger(__name__)
