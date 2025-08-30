@@ -48,6 +48,7 @@ The current available connectors are:
 |-------------------------|-------------------------|------------------------------|
 | Oracle                  | `hamana.connector.db`   | [Oracle](oracle.md) |
 | SQLite                  | `hamana.connector.db`   | [SQLite](sqlite.md) |
+| Teradata                | `hamana.connector.db`   | [Teradata](teradata.md) |
 
 ## Interface
 

@@ -30,7 +30,7 @@ class TeradataConnector(BaseConnector):
         """
             Initialize the Teradata connector with the given parameters.  
             Teradata provides a whole range of options to configure the connection 
-            with the database, see `teradatasql` Documentation (https://github.com/Teradata/python-driver).  
+            with the database, see `teradatasql` [Documentation](https://github.com/Teradata/python-driver).  
             For this reasons, the most common parameters can be passed directly to the constructor, 
             while all others can be specified directly as keyword arguments.
 
