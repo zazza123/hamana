@@ -336,7 +336,10 @@ class IntegerColumn(NumberColumn):
 
         _series = pd.Series(pd.NA, index = series.index)
         try:
-            _series_number = pd.to_numeric(series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."), errors = mode.value) # type: ignore (pandas issue in typing)
+            _series_number = pd.to_numeric(
+                arg = series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."),
+                errors = mode.value # type: ignore (pandas issue in typing)
+            )
             _series.loc[_series_number.index] = _series_number
         except Exception as e:
             logger.error(f"error parsing integer: {e}")
@@ -344,7 +347,7 @@ class IntegerColumn(NumberColumn):
 
         if self.null_default_value is not None:
             logger.debug(f"fill nulls, default value: {self.null_default_value}")
-            return _series.fillna(self.null_default_value).astype("int")
+            return pd.Series(_series, dtype = "Int64").fillna(self.null_default_value).astype("int")
 
         return pd.Series(_series.astype(float).apply(np.floor), dtype = "Int64")
 
