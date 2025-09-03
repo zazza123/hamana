@@ -310,7 +310,7 @@ class Query(Generic[TColumn]):
         if columns_query != columns_df:
             logger.info("re-ordering columns")
             logger.info(f"order > {columns_query}")
-            df = df[columns_query]
+            df = df.copy()[columns_query]
         else:
             logger.info("columns already in the correct order")
 
