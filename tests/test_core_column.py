@@ -82,7 +82,7 @@ def test_column_boolean_std_parser() -> None:
     """Test the standard boolean parser with valid inputs."""
 
     data_input  = pd.Series([None, "Y", "N", "A"])
-    data_output = pd.Series([pd.NA, True, False, pd.NA])
+    data_output = pd.Series([np.nan, True, False, np.nan])
     column = hm.column.BooleanColumn("standard")
     result = column.parser.pandas(data_input)
 
@@ -94,7 +94,7 @@ def test_column_datetime_std_parser_out_of_bound() -> None:
 
     # Standard (format = "%Y-%m-%d %H:%M:%S")
     data_input  = pd.Series([None, "2024-12-31 13:00:01", "1111-11-11 11:11:11"])
-    data_output = pd.Series([pd.NA, pd.Timestamp("2024-12-31 13:00:01"), datetime(1111, 11, 11, 11, 11, 11)])
+    data_output = pd.Series([pd.NaT, pd.Timestamp("2024-12-31 13:00:01"), datetime(1111, 11, 11, 11, 11, 11)])
     column = hm.column.DatetimeColumn("standard")
     result = column.parser.pandas(data_input)
 
@@ -153,7 +153,7 @@ def test_column_date_std_parser_out_of_bound() -> None:
 
     # Standard (format = "%Y-%m-%d")
     data_input  = pd.Series([None, "2024-12-31", "1111-11-11"])
-    data_output = pd.Series([pd.NA, pd.Timestamp("2024-12-31"), datetime(1111, 11, 11)])
+    data_output = pd.Series([pd.NaT, pd.Timestamp("2024-12-31"), datetime(1111, 11, 11)])
     column = hm.column.DateColumn("standard")
     result = column.parser.pandas(data_input)
 

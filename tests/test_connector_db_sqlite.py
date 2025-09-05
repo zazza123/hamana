@@ -1,5 +1,6 @@
 import pytest
 
+import numpy as np
 import pandas as pd
 
 import hamana as hm
@@ -186,11 +187,11 @@ def test_execute_query_with_meta_nulls() -> None:
 
     # check data
     pd.testing.assert_series_equal(df.c_integer, pd.Series([0, 2, 3, 4], dtype = "int64", name = "c_integer"))
-    pd.testing.assert_series_equal(df.c_number, pd.Series([0.01, 10.2, -1.3, None], dtype = "float64", name = "c_number"))
+    pd.testing.assert_series_equal(df.c_number, pd.Series([0.01, 10.2, -1.3, np.nan], dtype = "float64", name = "c_number"))
     pd.testing.assert_series_equal(df.c_text, pd.Series(["string_1", None, "string_2", "string_3"], dtype = "object", name = "c_text"))
-    pd.testing.assert_series_equal(df.c_boolean, pd.Series([True, False, True, None], dtype = "object", name = "c_boolean"))
-    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01", "2021-01-02", None, "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
-    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01", None, "2021-01-02 20:00:00", "2021-01-03 00:01:00"], dtype = "datetime64[ns]", name = "c_datetime"))
+    pd.testing.assert_series_equal(df.c_boolean, pd.Series([True, False, True, np.nan], dtype = "object", name = "c_boolean"))
+    pd.testing.assert_series_equal(df.c_date, pd.Series(["2021-01-01", "2021-01-02", np.nan, "2021-01-03"], dtype = "datetime64[ns]", name = "c_date"))
+    pd.testing.assert_series_equal(df.c_datetime, pd.Series(["2021-01-01 01:01:01", np.nan, "2021-01-02 20:00:00", "2021-01-03 00:01:00"], dtype = "datetime64[ns]", name = "c_datetime"))
 
 def test_execute_query_re_order_column() -> None:
     """

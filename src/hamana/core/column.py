@@ -334,7 +334,7 @@ class IntegerColumn(NumberColumn):
                 `ColumnParserPandasNumberError`: error parsing the number column.
         """
 
-        _series = pd.Series(pd.NA, index = series.index)
+        _series = pd.Series(np.nan, index = series.index)
         try:
             _series_number = pd.to_numeric(
                 arg = series.dropna().astype("str").str.replace(self.thousands_separator, "").str.replace(self.decimal_separator, "."),
@@ -347,7 +347,7 @@ class IntegerColumn(NumberColumn):
 
         if self.null_default_value is not None:
             logger.debug(f"fill nulls, default value: {self.null_default_value}")
-            return pd.Series(_series, dtype = "Int64").fillna(self.null_default_value).astype("int")
+            return pd.Series(_series, dtype = "float").fillna(self.null_default_value).astype("int")
 
         return pd.Series(_series.astype(float).apply(np.floor), dtype = "Int64")
 
